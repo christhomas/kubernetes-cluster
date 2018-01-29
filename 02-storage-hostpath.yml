@@ -15,15 +15,15 @@ spec:
             fieldRef:
               fieldPath: spec.nodeName
         - name: PV_DIR
-          value: /mnt/kubernetes-pv-standard
+          value: /mnt/kubernetes-pv-manual
 
       volumeMounts:
         - name: pv-volume
-          mountPath: /mnt/kubernetes-pv-standard
+          mountPath: /mnt/kubernetes-pv-manual
   volumes:
     - name: pv-volume
       hostPath:
-        path: /mnt/kubernetes-pv-standard
+        path: /mnt/kubernetes-pv-manual
 ---
 
 # -- Create the standard storage class for running on-node hostpath storage
@@ -31,7 +31,7 @@ apiVersion: storage.k8s.io/v1
 kind: StorageClass
 metadata:
   namespace: kube-system
-  name: standard
+  name: manual
   annotations:
     storageclass.beta.kubernetes.io/is-default-class: "true"
   labels:
@@ -45,14 +45,14 @@ apiVersion: v1
 kind: PersistentVolume
 metadata:
   namespace: kube-system
-  name: standard
+  name: manual
   labels:
-    type: standard
+    type: manual
 spec:
-  storageClassName: standard
+  storageClassName: manual
   capacity:
     storage: 130Gi
   accessModes:
     - ReadWriteOnce
   hostPath:
-    path: "/mnt/kubernetes-pv-standard"
+    path: "/mnt/kubernetes-pv-manual"
