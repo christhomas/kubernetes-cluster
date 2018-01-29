@@ -21,13 +21,32 @@ spec:
       - name: hello-php-phpfpm
         image: hello-php-phpfpm:v2
         volumeMounts:
-        - name: php-socket
-          mountPath: /sock
+          - name: php-socket
+            mountPath: /sock
+          - name: data
+            mountPath: /data
+
 
       volumes:
-      - name: php-socket
-        emptyDir: {}
+        - name: php-socket
+          emptyDir: {}
+        - name: data
+          persistentVolumeClaim:
+            claimName: hello-php
+
 ---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: hello-php
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 8Mi
+---
+
 apiVersion: v1
 kind: Service
 metadata:
