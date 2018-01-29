@@ -64,7 +64,6 @@ metadata:
   name: hello-mysql
   namespace: hello-mysql
 spec:
-  storageClassName: manual
   accessModes:
     - ReadWriteOnce
   resources:
