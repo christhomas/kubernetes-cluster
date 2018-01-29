@@ -12,7 +12,6 @@ metadata:
   name: gitlab-config
   namespace: gitlab
 spec:
-  storageClassName: standard
   accessModes:
     - ReadWriteOnce
   resources:
@@ -27,7 +26,6 @@ metadata:
   name: gitlab-logs
   namespace: gitlab
 spec:
-  storageClassName: standard
   accessModes:
     - ReadWriteOnce
   resources:
@@ -42,7 +40,6 @@ metadata:
   name: gitlab-data
   namespace: gitlab
 spec:
-  storageClassName: standard
   accessModes:
     - ReadWriteOnce
   resources:
@@ -50,7 +47,7 @@ spec:
       storage: 20Gi
 ---
 
-# -- Deloyment of the docker container
+# -- Deployment of the docker container
 apiVersion: apps/v1beta1
 kind: Deployment
 metadata:
@@ -76,7 +73,7 @@ spec:
           env:
           - name: GITLAB_OMNIBUS_CONFIG
             value: |
-              external_url 'https://gitlab.example.com'
+              external_url 'https://gitlab.antimatter-studios.com'
               # Add any other gitlab.rb configuration here, each on its own line
           ports:
             - containerPort: 8080
