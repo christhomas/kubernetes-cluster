@@ -47,7 +47,7 @@ Updating Jessie debian to support kubernetes
 9. Install a kubernetes network control plane
     TO USE FLANNEL
 	- kubectl apply -f https://raw.githubusercontent.com/coreos/flannel/v0.9.1/Documentation/kube-flannel.yml
-	OR USE WEAVE.NET
+	###### OR USE WEAVE.NET
 	- export kubever=$(kubectl version | base64 | tr -d '\n')
     - kubectl apply -f "https://cloud.weave.works/k8s/net?k8s-version=$kubever"
 
