@@ -1,15 +1,8 @@
-# -- Create a namespace for all the components needed for the Ingress
-apiVersion: v1
-kind: Namespace
-metadata:
-  name: ingress-controller
----
-
 # -- Create a specific service account for the ingress controller
 apiVersion: v1
 kind: ServiceAccount
 metadata:
-  namespace: ingress-controller
+  namespace: kube-system
   name: ingress
 ---
 
@@ -54,25 +47,25 @@ roleRef:
 subjects:
 - kind: ServiceAccount
   name: ingress
-  namespace: ingress-controller
+  namespace: kube-system
 ---
 
 # -- Create a daemon set, so the default backend (handling unhandled endpoints) runs on each node
 apiVersion: extensions/v1beta1
 kind: DaemonSet
 metadata:
-  namespace: ingress-controller
-  name: default-ingress-backend
+  namespace: kube-system
+  name: ingress-default-backend
 spec:
   template:
     metadata:
       labels:
-        app: default-ingress-backend
+        app: ingress-default-backend
     spec:
       serviceAccountName: ingress
       terminationGracePeriodSeconds: 0
       containers:
-      - name: default-ingress-backend
+      - name: ingress-default-backend
         image: gcr.io/google_containers/defaultbackend:1.0
         livenessProbe:
           httpGet:
@@ -96,11 +89,11 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  namespace: ingress-controller
-  name: default-ingress-backend
+  namespace: kube-system
+  name: ingress-default-backend
 spec:
   selector:
-    app: default-ingress-backend
+    app: ingress-default-backend
   ports:
     - protocol: TCP
       port: 80
@@ -112,14 +105,14 @@ spec:
 apiVersion: extensions/v1beta1
 kind: DaemonSet
 metadata:
-  namespace: ingress-controller
-  name: web-ingress-controller
+  namespace: kube-system
+  name: ingress-web-controller
 spec:
   revisionHistoryLimit: 3
   template:
     metadata:
       labels:
-        app: web-ingress-controller
+        app: ingress-web-controller
     spec:
       serviceAccountName: ingress
       hostNetwork: true
@@ -127,7 +120,7 @@ spec:
       containers:
         - args:
             - /nginx-ingress-controller
-            - "--default-backend-service=$(POD_NAMESPACE)/default-ingress-backend"
+            - "--default-backend-service=$(POD_NAMESPACE)/ingress-default-backend"
           env:
             - name: POD_NAME
               valueFrom:
@@ -146,7 +139,7 @@ spec:
               scheme: HTTP
             initialDelaySeconds: 10
             timeoutSeconds: 5
-          name: web-ingress-controller
+          name: ingress-web-controller
           ports:
             - containerPort: 80
               hostPort: 80
