@@ -1,0 +1,136 @@
+# -- Gitlab should be installed in it's own namespace, so when it becomes a multi-container group, it'll be isolated
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: gitlab
+---
+
+# -- Persistent Volume Claim for the gitlab configuration
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: gitlab-config
+  namespace: gitlab
+spec:
+  storageClassName: standard
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
+---
+
+# -- Persistent Volume Claim for the gitlab logs
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: gitlab-logs
+  namespace: gitlab
+spec:
+  storageClassName: standard
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
+---
+
+# -- Persistent Volume Claim for the gitlab data
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: gitlab-data
+  namespace: gitlab
+spec:
+  storageClassName: standard
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 20Gi
+---
+
+# -- Deloyment of the docker container
+apiVersion: apps/v1beta1
+kind: Deployment
+metadata:
+  name: gitlab
+  namespace: gitlab
+spec:
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: gitlab
+    spec:
+      containers:
+        - name: gitlab
+          image: gitlab/gitlab-ce:latest
+          volumeMounts:
+            - name: gitlab-config
+              mountPath: /etc/gitlab
+            - name: gitlab-logs
+              mountPath: /var/log/gitlab
+            - name: gitlab-data
+              mountPath: /var/opt/gitlab
+          env:
+          - name: GITLAB_OMNIBUS_CONFIG
+            value: |
+              external_url 'https://gitlab.example.com'
+              # Add any other gitlab.rb configuration here, each on its own line
+          ports:
+            - containerPort: 8080
+              name: http
+            - containerPort: 442
+              name: https
+            - containerPort: 22
+              name: ssh
+      volumes:
+        - name: gitlab-config
+          persistentVolumeClaim:
+            claimName: gitlab-config
+        - name: gitlab-logs
+          persistentVolumeClaim:
+            claimName: gitlab-logs
+        - name: gitlab-data
+          persistentVolumeClaim:
+            claimName: gitlab-data
+---
+
+# -- Service for the Ingress to target
+apiVersion: v1
+kind: Service
+metadata:
+  name: gitlab
+  namespace: gitlab
+spec:
+  selector:
+    app: gitlab
+  ports:
+    - port: 80
+      targetPort: 8080
+      name: http
+    - port: 443
+      targetPort: 443
+      name: https
+    - port: 22
+      targetPort: 22
+      name: ssh
+---
+
+# -- Ingress configuration for Gitlab
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: gitlab
+  namespace: gitlab
+  annotations:
+    ingress.kubernetes.io/rewrite-target: /
+spec:
+  rules:
+    - host: gitlab.antimatter-studios.com
+      http:
+        paths:
+          - backend:
+              serviceName: gitlab
+              servicePort: 80

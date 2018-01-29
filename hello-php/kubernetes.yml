@@ -1,0 +1,53 @@
+apiVersion: apps/v1beta1
+kind: Deployment
+metadata:
+  name: hello-php
+spec:
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: hello-php
+    spec:
+      containers:
+      - name: hello-php-nginx
+        image: hello-php-nginx:v2
+        ports:
+          - containerPort: 8080
+        volumeMounts:
+        - name: php-socket
+          mountPath: /sock
+
+      - name: hello-php-phpfpm
+        image: hello-php-phpfpm:v2
+        volumeMounts:
+        - name: php-socket
+          mountPath: /sock
+
+      volumes:
+      - name: php-socket
+        emptyDir: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: hello-php
+spec:
+  selector:
+    app: hello-php
+  ports:
+    - port: 80
+      targetPort: 8080
+---
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: hello-php
+spec:
+  rules:
+    - host: hello-php.local
+      http:
+        paths:
+          - backend:
+              serviceName: hello-php
+              servicePort: 80

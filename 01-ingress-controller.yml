@@ -1,0 +1,158 @@
+# -- Create a namespace for all the components needed for the Ingress
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ingress-controller
+---
+
+# -- Create a specific service account for the ingress controller
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  namespace: ingress-controller
+  name: ingress
+---
+
+# -- Create the permissions the ingress needs control over
+kind: ClusterRole
+apiVersion: rbac.authorization.k8s.io/v1beta1
+metadata:
+  name: ingress
+rules:
+- apiGroups: ["","extensions"]
+  resources: ["configmaps","secrets","services","ingresses","nodes","pods"]
+  verbs: ["get","list","watch"]
+- apiGroups: ["","extensions"]
+  resources: ["endpoints"]
+  verbs: ["create","update","get","list","watch"]
+- apiGroups: [""]
+  resources: ["services","endpoints"]
+  verbs: ["list","watch"]
+- apiGroups: [""]
+  resources: ["configmaps","secrets"]
+  verbs: ["get","list","watch"]
+- apiGroups: [""]
+  resources: ["pods"]
+  verbs: ["list"]
+- apiGroups: [""]
+  resources: ["events"]
+  verbs: ["create","patch"]
+- apiGroups: ["extensions"]
+  resources: ["ingresses","ingresses/status"]
+  verbs: ["update","list","watch"]
+---
+
+# -- Bind the permissions onto the service account
+kind: ClusterRoleBinding
+apiVersion: rbac.authorization.k8s.io/v1beta1
+metadata:
+  name: ingress
+roleRef:
+  kind: ClusterRole
+  name: ingress
+  apiGroup: rbac.authorization.k8s.io
+subjects:
+- kind: ServiceAccount
+  name: ingress
+  namespace: ingress-controller
+---
+
+# -- Create a daemon set, so the default backend (handling unhandled endpoints) runs on each node
+apiVersion: extensions/v1beta1
+kind: DaemonSet
+metadata:
+  namespace: ingress-controller
+  name: default-ingress-backend
+spec:
+  template:
+    metadata:
+      labels:
+        app: default-ingress-backend
+    spec:
+      serviceAccountName: ingress
+      terminationGracePeriodSeconds: 0
+      containers:
+      - name: default-ingress-backend
+        image: gcr.io/google_containers/defaultbackend:1.0
+        livenessProbe:
+          httpGet:
+            path: /healthz
+            port: 8080
+            scheme: HTTP
+          initialDelaySeconds: 30
+          timeoutSeconds: 5
+        ports:
+        - containerPort: 8080
+        resources:
+          limits:
+            cpu: 10m
+            memory: 20Mi
+          requests:
+            cpu: 10m
+            memory: 20Mi
+---
+
+# -- Expose the default ingress backend as a service so it can be used by the ingress-nginx-controller
+apiVersion: v1
+kind: Service
+metadata:
+  namespace: ingress-controller
+  name: default-ingress-backend
+spec:
+  selector:
+    app: default-ingress-backend
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 8080
+  type: NodePort
+---
+
+# -- Create a daemon set, so the ingress-nginx-controller runs on each node to handle requests
+apiVersion: extensions/v1beta1
+kind: DaemonSet
+metadata:
+  namespace: ingress-controller
+  name: web-ingress-controller
+spec:
+  revisionHistoryLimit: 3
+  template:
+    metadata:
+      labels:
+        app: web-ingress-controller
+    spec:
+      serviceAccountName: ingress
+      hostNetwork: true
+      terminationGracePeriodSeconds: 0
+      containers:
+        - args:
+            - /nginx-ingress-controller
+            - "--default-backend-service=$(POD_NAMESPACE)/default-ingress-backend"
+          env:
+            - name: POD_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+            - name: POD_NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
+          image: gcr.io/google_containers/nginx-ingress-controller:0.9.0-beta.5
+          imagePullPolicy: Always
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: 10254
+              scheme: HTTP
+            initialDelaySeconds: 10
+            timeoutSeconds: 5
+          name: web-ingress-controller
+          ports:
+            - containerPort: 80
+              hostPort: 80
+              name: http
+              protocol: TCP
+            - containerPort: 443
+              hostPort: 443
+              name: https
+              protocol: TCP

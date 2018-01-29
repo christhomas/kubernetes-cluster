@@ -1,0 +1,30 @@
+# -- Create the standard storage class for running on-node hostpath storage
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  namespace: kube-system
+  name: standard
+  annotations:
+    storageclass.beta.kubernetes.io/is-default-class: "true"
+  labels:
+    kubernetes.io/cluster-service: "true"
+    addonmanager.kubernetes.io/mode: EnsureExists
+provisioner: kubernetes.io/host-path
+---
+
+# -- Create a Persistent Volume which claims control over the free space on the app server
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  namespace: kube-system
+  name: standard
+  labels:
+    type: standard
+spec:
+  storageClassName: standard
+  capacity:
+    storage: 130Gi
+  accessModes:
+    - ReadWriteOnce
+  hostPath:
+    path: "/mnt/kubernetes-pv-standard"

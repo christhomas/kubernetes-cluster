@@ -1,0 +1,22 @@
+version: '2'
+
+services:
+  phpfpm:
+    image: hello-php-phpfpm:v2
+    build:
+      context: .
+      dockerfile: ./docker/Dockerfile.phpfpm
+    volumes:
+      - ./sock:/sock
+      - ./www:/www/
+
+  nginx:
+    image: hello-php-nginx:v2
+    build:
+      context: .
+      dockerfile: ./docker/Dockerfile.nginx
+    ports:
+      - 8080:80
+    volumes:
+      - ./sock:/sock
+      - ./www/index.php:/www/index.php
