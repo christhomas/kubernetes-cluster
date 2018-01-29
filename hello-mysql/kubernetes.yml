@@ -82,7 +82,7 @@ spec:
     matchLabels:
       app: hello-mysql
   serviceName: hello-mysql
-  replicas: 3
+  replicas: 1
   template:
     metadata:
       labels:
@@ -243,7 +243,7 @@ metadata:
   name: hello-mysql
   namespace: hello-mysql
 spec:
-  replicas: 5
+  replicas: 1
   template:
     metadata:
       labels:
@@ -251,15 +251,15 @@ spec:
     spec:
       containers:
       - name: hello-mysql-nginx
-        image: hello-mysql-nginx:v1
+        image: hello-mysql-nginx:v2
         ports:
           - containerPort: 8080
         volumeMounts:
         - name: php-socket
           mountPath: /sock
 
-      - name: hello-php-phpfpm
-        image: hello-php-phpfpm:v1
+      - name: hello-mysql-phpfpm
+        image: hello-mysql-phpfpm:v2
         volumeMounts:
         - name: php-socket
           mountPath: /sock

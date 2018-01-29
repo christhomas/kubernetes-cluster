@@ -2,7 +2,7 @@ version: '2'
 
 services:
   phpfpm:
-    image: hello-mysql-phpfpm:v1
+    image: hello-mysql-phpfpm:v2
     build:
       context: .
       dockerfile: ./docker/Dockerfile.phpfpm
@@ -11,7 +11,7 @@ services:
       - ./www:/www/
 
   nginx:
-    image: hello-mysql-nginx:v1
+    image: hello-mysql-nginx:v2
     build:
       context: .
       dockerfile: ./docker/Dockerfile.nginx

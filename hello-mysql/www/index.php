@@ -1,2 +1,2 @@
 <?php
-print("Heldddddddasdasdasddddasdadasddddddlo World from PHP MySQL Demonstration!!");
+print("Hello World from PHP MySQL Demonstration!!");
