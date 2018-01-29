@@ -4,6 +4,7 @@ kind: Namespace
 metadata:
   name: hello-mysql
 ---
+
 # hello mysql configuration map
 apiVersion: v1
 kind: ConfigMap
@@ -22,6 +23,7 @@ data:
     [mysqld]
     super-read-only
 ---
+
 # Headless service for stable DNS entries of StatefulSet members.
 apiVersion: v1
 kind: Service
@@ -38,6 +40,7 @@ spec:
   selector:
     app: hello-mysql
 ---
+
 # Client service for connecting to any MySQL instance for reads.
 # For writes, you must instead connect to the master: mysql-0.mysql.
 apiVersion: v1
@@ -54,19 +57,21 @@ spec:
   selector:
     app: hello-mysql
 ---
+
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
   name: hello-mysql
   namespace: hello-mysql
 spec:
+  storageClassName: standard
   accessModes:
     - ReadWriteOnce
-  volumeMode: Filesystem
   resources:
     requests:
-      storage: 10Gi
+      storage: 8Mi
 ---
+
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
@@ -231,6 +236,7 @@ spec:
         persistentVolumeClaim:
           claimName: hello-mysql
 ---
+
 apiVersion: apps/v1beta1
 kind: Deployment
 metadata:
@@ -262,6 +268,7 @@ spec:
       - name: php-socket
         emptyDir: {}
 ---
+
 apiVersion: v1
 kind: Service
 metadata:
@@ -274,6 +281,7 @@ spec:
     - port: 80
       targetPort: 8080
 ---
+
 apiVersion: extensions/v1beta1
 kind: Ingress
 metadata:
