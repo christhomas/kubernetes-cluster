@@ -5,4 +5,4 @@ services:
     image: jpillora/dnsmasq:latest
     restart: always
     volumes:
-      - ./dnsmasq.conf:/etc/dnsmasq.conf
+      - ./docker-dnsmasq.conf:/etc/dnsmasq.conf
