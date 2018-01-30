@@ -288,7 +288,7 @@ metadata:
   namespace: hello-mysql
 spec:
   rules:
-    - host: hello-mysql.local
+    - host: hello-mysql.local.env
       http:
         paths:
           - backend:

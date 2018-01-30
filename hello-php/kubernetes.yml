@@ -64,7 +64,7 @@ metadata:
   name: hello-php
 spec:
   rules:
-    - host: hello-php.local
+    - host: hello-php.local.env
       http:
         paths:
           - backend:
