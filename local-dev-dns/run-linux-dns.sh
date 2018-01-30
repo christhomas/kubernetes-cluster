@@ -15,4 +15,8 @@ sudo sed -i "/\# CONTAINER\:jpillora\/dnsmasq\:latest/d" $resolve_conf
 
 echo "nameserver $ipaddress # CONTAINER:$container_name ip address" | sudo tee -a $resolve_conf
 sudo resolvconf -u
-cat $resolve_conf
+
+# we need to sleep for a second in order that the dns is updated
+sleep 1
+echo "Testing DNS Resolution with a test domain 'test-dns.local.env'"
+ping -c1 -W 1 test-dns.local.env
