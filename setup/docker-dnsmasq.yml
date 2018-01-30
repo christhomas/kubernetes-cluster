@@ -1,9 +1,0 @@
-version: '2'
-services:
-  local-dns:
-    image: janeczku/go-dnsmasq:latest
-    restart: always
-    volumes:
-      - ./docker-dnsmasq-hosts:/etc/hosts
-    environment:
-      - DNSMASQ_HOSTSFILE=/etc/hosts
