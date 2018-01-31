@@ -18,7 +18,7 @@ if [ $(uname -o) = "GNU/Linux" ]; then
     if [ "$found" != "" ]; then
         echo "The package 'libnss-mdns' was installed"
         echo "On GNU/Linux systems this must be uninstalled for *.local domains to function correctly and as expected"
-        sudo apt-get remove -y libnss-mdns
+        sudo apt-get remove libnss-mdns
     fi
 fi
 
