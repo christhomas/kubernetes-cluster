@@ -1,7 +1,29 @@
 #!/bin/sh
-docker-compose stop
-docker-compose up -d
 
+echo "Running the Local DNSMasq for Docker / Kubernetes"
+
+# This DIR variable resolves any problem of referencing this script from another location on the disk
+directory=$(dirname "$(readlink -f "$0")")
+compose=$directory/docker-compose.yml
+
+echo "Rebooting the docker-compose: $compose"
+docker-compose -f $compose stop
+docker-compose -f $compose up -d
+
+# Only run this command on linux since on mac this is not a problem
+if [ $(uname -o) = "GNU/Linux" ]; then
+    package="libnss-mdns"
+    found=$(dpkg-query -W --showformat='${Status}\n' $package | grep "install ok installed")
+
+    if [ "$found" != "" ]; then
+        echo "The package 'libnss-mdns' was installed"
+        echo "On GNU/Linux systems this must be uninstalled for *.local domains to function correctly and as expected"
+        sudo apt-get remove -y libnss-mdns
+    fi
+fi
+
+# Now lets configure the DNS server inside the docker container to resolve our project domains
+local_domain=project.local
 resolve_conf=/etc/resolvconf/resolv.conf.d/head
 container_name="jpillora/dnsmasq:latest"
 container_id=$(docker ps | grep $container_name | awk '{ print $1 }')
@@ -18,5 +40,5 @@ sudo resolvconf -u
 
 # we need to sleep for a second in order that the dns is updated
 sleep 1
-echo "Testing DNS Resolution with a test domain 'test-dns.local.env'"
-ping -c1 -W 1 test-dns.local.env
+echo "Testing DNS Resolution with a test domain 'test-dns.$local_domain'"
+ping -c1 -W 1 test-dns.$local_domain
