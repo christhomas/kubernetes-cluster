@@ -1,0 +1,8 @@
+version: '2'
+
+services:
+  local-dns:
+    image: jpillora/dnsmasq:latest
+    restart: always
+    volumes:
+      - ./docker-dnsmasq.conf:/etc/dnsmasq.conf

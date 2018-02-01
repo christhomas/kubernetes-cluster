@@ -36,7 +36,7 @@ metadata:
     ingress.kubernetes.io/rewrite-target: /
 spec:
   rules:
-    - host: hello-node.local
+    - host: hello-node.local.env
       http:
         paths:
           - backend:
