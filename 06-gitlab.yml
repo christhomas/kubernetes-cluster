@@ -71,10 +71,10 @@ spec:
             - name: gitlab-data
               mountPath: /var/opt/gitlab
           env:
-          - name: GITLAB_OMNIBUS_CONFIG
-            value: |
-              external_url 'https://gitlab.antimatter-studios.com'
-              # Add any other gitlab.rb configuration here, each on its own line
+            - name: GITLAB_OMNIBUS_CONFIG
+              value: |
+                external_url 'http://git.antimatter-studios.com'
+                # Add any other gitlab.rb configuration here, each on its own line
           ports:
             - containerPort: 8080
               name: http
@@ -125,7 +125,7 @@ metadata:
     ingress.kubernetes.io/rewrite-target: /
 spec:
   rules:
-    - host: gitlab.antimatter-studios.com
+    - host: git.antimatter-studios.com
       http:
         paths:
           - backend:
