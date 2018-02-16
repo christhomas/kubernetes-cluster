@@ -2,7 +2,7 @@ version: '2'
 
 services:
   phpfpm:
-    image: hello-php-phpfpm:v2
+    image: christhomas/hello-php:v4-phpfpm
     build:
       context: .
       dockerfile: ./docker/Dockerfile.phpfpm
@@ -11,7 +11,7 @@ services:
       - ./www:/www/
 
   nginx:
-    image: hello-php-nginx:v2
+    image: christhomas/hello-php:v4-nginx
     build:
       context: .
       dockerfile: ./docker/Dockerfile.nginx
