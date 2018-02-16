@@ -5,6 +5,34 @@ metadata:
   name: gitlab
 ---
 
+# -- Gitlab Configuration
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: gitlab-init-config
+  namespace: gitlab
+data:
+  gitlab.rb: |
+    # Add any other gitlab.rb configuration here, each on its own line
+    # external_url 'https://git.antimatter-studios.com'
+    # Setting up a password for the root account
+    gitlab_rails['initial_root_password'] = '09nv53%£$BN90n83rv823n'
+    # Setting up the config for postgres
+    postgresql['enable'] = false
+    gitlab_rails['db_database'] = 'postgres'
+    gitlab_rails['db_adapter'] = 'postgresql'
+    gitlab_rails['db_encoding'] = 'utf8'
+    gitlab_rails['db_host'] = '127.0.01'
+    gitlab_rails['db_port'] = '5432'
+    gitlab_rails['db_username'] = 'postgres'
+    gitlab_rails['db_password'] = 'postgres'
+    # Setting up the config for redis
+    redis['enable'] = false
+    gitlab_rails['redis_host'] = '127.0.0.1'
+    gitlab_rails['redis_port'] = 6379
+    # ssh_port=XXXX
+---
+
 # -- Persistent Volume Claim for the gitlab configuration
 apiVersion: v1
 kind: PersistentVolumeClaim
@@ -12,6 +40,7 @@ metadata:
   name: gitlab-config
   namespace: gitlab
 spec:
+  #persistentVolumeReclaimPolicy: Retain
   accessModes:
     - ReadWriteOnce
   resources:
@@ -26,6 +55,7 @@ metadata:
   name: gitlab-logs
   namespace: gitlab
 spec:
+  #persistentVolumeReclaimPolicy: Retain
   accessModes:
     - ReadWriteOnce
   resources:
@@ -40,6 +70,22 @@ metadata:
   name: gitlab-data
   namespace: gitlab
 spec:
+  #persistentVolumeReclaimPolicy: Retain
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 20Gi
+---
+
+# -- Persistent Volume Claim for the gitlab postgres database
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: gitlab-postgres
+  namespace: gitlab
+spec:
+  #persistentVolumeReclaimPolicy: Retain
   accessModes:
     - ReadWriteOnce
   resources:
@@ -60,38 +106,66 @@ spec:
       labels:
         app: gitlab
     spec:
+      initContainers:
+        - name: init-gitlab
+          image: busybox
+          command: ["sh","-c","cp /mnt/init-config/gitlab.rb /mnt/gitlab-config"]
+          volumeMounts:
+            - name: init-config
+              mountPath: /mnt/init-config
+            - name: config
+              mountPath: /mnt/gitlab-config
+
       containers:
         - name: gitlab
-          image: gitlab/gitlab-ce:latest
+          image: gitlab/gitlab-ce:10.2.8-ce.0
           volumeMounts:
-            - name: gitlab-config
+            - name: config
               mountPath: /etc/gitlab
-            - name: gitlab-logs
+            - name: logs
               mountPath: /var/log/gitlab
-            - name: gitlab-data
+            - name: data
               mountPath: /var/opt/gitlab
-          env:
-            - name: GITLAB_OMNIBUS_CONFIG
-              value: |
-                external_url 'http://git.antimatter-studios.com'
-                # Add any other gitlab.rb configuration here, each on its own line
           ports:
-            - containerPort: 8080
+            - containerPort: 80
               name: http
-            - containerPort: 442
+            - containerPort: 443
               name: https
             - containerPort: 22
               name: ssh
+
+        - name: postgres
+          image: postgres:10-alpine
+          volumeMounts:
+            - name: postgres
+              mountPath: /var/lib/postgres/data
+          env:
+            - name: POSTGRES_PASSWORD
+              value: postgres
+            - name: POSTGRES_DB
+              value: postgres
+            - name: PGDATA
+              value: /var/lig/postgresql/data/pgdata
+
+        - name: redis
+          image: redis:4.0.7-alpine
+
       volumes:
-        - name: gitlab-config
+        - name: init-config
+          configMap:
+            name: gitlab-init-config
+        - name: config
           persistentVolumeClaim:
             claimName: gitlab-config
-        - name: gitlab-logs
+        - name: logs
           persistentVolumeClaim:
             claimName: gitlab-logs
-        - name: gitlab-data
+        - name: data
           persistentVolumeClaim:
             claimName: gitlab-data
+        - name: postgres
+          persistentVolumeClaim:
+            claimName: gitlab-postgres
 ---
 
 # -- Service for the Ingress to target
@@ -105,7 +179,7 @@ spec:
     app: gitlab
   ports:
     - port: 80
-      targetPort: 8080
+      targetPort: 80
       name: http
     - port: 443
       targetPort: 443
