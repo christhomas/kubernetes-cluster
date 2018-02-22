@@ -250,7 +250,7 @@ spec:
     spec:
       containers:
       - name: hello-mysql-nginx
-        image: hello-mysql-nginx:v2
+        image: christhomas/hello-mysql:v2-nginx
         ports:
           - containerPort: 8080
         volumeMounts:
@@ -258,7 +258,7 @@ spec:
           mountPath: /sock
 
       - name: hello-mysql-phpfpm
-        image: hello-mysql-phpfpm:v2
+        image: christhomas/hello-mysql:v2-phpfpm
         volumeMounts:
         - name: php-socket
           mountPath: /sock
