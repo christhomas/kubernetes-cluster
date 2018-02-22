@@ -12,27 +12,24 @@ apiVersion: rbac.authorization.k8s.io/v1beta1
 metadata:
   name: ingress
 rules:
-- apiGroups: ["","extensions"]
-  resources: ["configmaps","secrets","services","ingresses","nodes","pods"]
-  verbs: ["get","list","watch"]
-- apiGroups: ["","extensions"]
-  resources: ["endpoints"]
-  verbs: ["create","update","get","list","watch"]
-- apiGroups: [""]
-  resources: ["services","endpoints"]
-  verbs: ["list","watch"]
-- apiGroups: [""]
-  resources: ["configmaps","secrets"]
-  verbs: ["get","list","watch"]
-- apiGroups: [""]
-  resources: ["pods"]
-  verbs: ["list"]
-- apiGroups: [""]
-  resources: ["events"]
-  verbs: ["create","patch"]
-- apiGroups: ["extensions"]
-  resources: ["ingresses","ingresses/status"]
-  verbs: ["update","list","watch"]
+  - apiGroups: [""]
+    resources: ["configmaps","endpoints","nodes","pods","secrets"]
+    verbs: ["list","watch"]
+  - apiGroups: [""]
+    resources: ["nodes"]
+    verbs: ["get"]
+  - apiGroups: [""]
+    resources: ["services"]
+    verbs: ["get","list","watch"]
+  - apiGroups: ["extensions"]
+    resources: ["ingresses"]
+    verbs: ["get","list","watch"]
+  - apiGroups: [""]
+    resources: ["events"]
+    verbs: ["create","patch"]
+  - apiGroups: ["extensions"]
+    resources: ["ingresses/status"]
+    verbs: ["update"]
 ---
 
 # -- Bind the permissions onto the service account
@@ -48,6 +45,48 @@ subjects:
 - kind: ServiceAccount
   name: ingress
   namespace: kube-system
+---
+
+# -- Create a role to bind onto the service account
+apiVersion: rbac.authorization.k8s.io/v1beta1
+kind: Role
+metadata:
+  name: ingress
+  namespace: kube-system
+rules:
+  - apiGroups: [""]
+    resources: ["configmaps","pods","secrets","namespaces"]
+    verbs: ["get"]
+  - apiGroups: [""]
+    resources: ["configmaps"]
+    # Defaults to "<election-id>-<ingress-class>"
+    # Here: "<ingress-controller-leader>-<nginx>"
+    # This has to be adapted if you change either parameter
+    # when launching the nginx-ingress-controller.
+    resourceNames: ["ingress-controller-leader-nginx"]
+    verbs: ["get","update"]
+  - apiGroups: [""]
+    resources: ["configmaps"]
+    verbs: ["create"]
+  - apiGroups: [""]
+    resources: ["endpoints"]
+    verbs: ["get"]
+---
+
+# -- Bind the role to the ingress service account
+apiVersion: rbac.authorization.k8s.io/v1beta1
+kind: RoleBinding
+metadata:
+  name: ingress
+  namespace: kube-system
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: ingress
+subjects:
+  - kind: ServiceAccount
+    name: ingress
+    namespace: kube-system
 ---
 
 # -- Create a daemon set, so the default backend (handling unhandled endpoints) runs on each node
@@ -92,13 +131,13 @@ metadata:
   namespace: kube-system
   name: ingress-default-backend
 spec:
+  type: NodePort
   selector:
     app: ingress-default-backend
   ports:
     - protocol: TCP
       port: 80
       targetPort: 8080
-  type: NodePort
 ---
 
 # -- Create a daemon set for web requests and send them to the nginx-ingress-controller
@@ -106,21 +145,22 @@ apiVersion: extensions/v1beta1
 kind: DaemonSet
 metadata:
   namespace: kube-system
-  name: ingress-web-controller
+  name: ingress-controller
 spec:
   revisionHistoryLimit: 3
   template:
     metadata:
       labels:
-        app: ingress-web-controller
+        app: ingress-controller
     spec:
       serviceAccountName: ingress
       hostNetwork: true
       terminationGracePeriodSeconds: 0
       containers:
-        - args:
+        - name: ingress-controller
+          args:
             - /nginx-ingress-controller
-            - "--default-backend-service=$(POD_NAMESPACE)/ingress-default-backend"
+            - '--default-backend-service=$(POD_NAMESPACE)/ingress-default-backend'
           env:
             - name: POD_NAME
               valueFrom:
@@ -130,7 +170,7 @@ spec:
               valueFrom:
                 fieldRef:
                   fieldPath: metadata.namespace
-          image: gcr.io/google_containers/nginx-ingress-controller:0.9.0-beta.5
+          image: gcr.io/google_containers/nginx-ingress-controller:0.9.0-beta.15
           imagePullPolicy: Always
           livenessProbe:
             httpGet:
@@ -139,7 +179,7 @@ spec:
               scheme: HTTP
             initialDelaySeconds: 10
             timeoutSeconds: 5
-          name: ingress-web-controller
+
           ports:
             - containerPort: 80
               hostPort: 80
@@ -149,48 +189,8 @@ spec:
               hostPort: 443
               name: https
               protocol: TCP
----
-# -- Create a daemon set for web requests and send them to the nginx-ingress-controller
-apiVersion: extensions/v1beta1
-kind: DaemonSet
-metadata:
-  namespace: kube-system
-  name: ingress-system-controller
-spec:
-  revisionHistoryLimit: 3
-  template:
-    metadata:
-      labels:
-        app: ingress-system-controller
-    spec:
-      serviceAccountName: ingress
-      hostNetwork: true
-      terminationGracePeriodSeconds: 0
-      containers:
-        - args:
-            - /nginx-ingress-controller
-            - "--default-backend-service=$(POD_NAMESPACE)/ingress-default-backend"
-          env:
-            - name: POD_NAME
-              valueFrom:
-                fieldRef:
-                  fieldPath: metadata.name
-            - name: POD_NAMESPACE
-              valueFrom:
-                fieldRef:
-                  fieldPath: metadata.namespace
-          image: gcr.io/google_containers/nginx-ingress-controller:0.9.0-beta.5
-          imagePullPolicy: Always
-          livenessProbe:
-            httpGet:
-              path: /healthz
-              port: 10254
-              scheme: HTTP
-            initialDelaySeconds: 10
-            timeoutSeconds: 5
-          name: ingress-system-controller
-          ports:
-            - containerPort: 2222
-              hostPort: 2222
+            - containerPort: 10022
+              hostPort: 10022
               name: ssh
               protocol: TCP
+---

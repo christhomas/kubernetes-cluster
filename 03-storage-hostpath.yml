@@ -66,6 +66,8 @@ subjects:
 ---
 
 # -- Create a pod in the kube-system namespace to run the host path provisioner
+# -- The hostpath provisioner is for any volumes which are dynamically created
+# -- It does not provide volumes for any static persistent volumes
 apiVersion: v1
 kind: Pod
 metadata:
@@ -83,15 +85,15 @@ spec:
             fieldRef:
               fieldPath: spec.nodeName
         - name: PV_DIR
-          value: /mnt/kubernetes-pv-manual
+          value: /mnt/kubernetes
 
       volumeMounts:
         - name: pv-volume
-          mountPath: /mnt/kubernetes-pv-manual
+          mountPath: /mnt/kubernetes
   volumes:
     - name: pv-volume
       hostPath:
-        path: /mnt/kubernetes-pv-manual
+        path: /mnt/kubernetes
 ---
 
 # -- Create the standard storage class for running on-node hostpath storage

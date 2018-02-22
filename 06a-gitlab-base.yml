@@ -1,0 +1,64 @@
+# -- Gitlab should be installed in it's own namespace, so when it becomes a multi-container group, it'll be isolated
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: gitlab
+---
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  labels:
+    app: gitlab
+  name: gitlab-cm
+  namespace: gitlab
+data:
+  # Timezone
+  TZ: "Europe/Berlin"
+  GITLAB_TIMEZONE: "Berlin"
+  # GitLab
+  GITLAB_ROOT_EMAIL: "gitlab@antimatter-studios.com"
+  GITLAB_HOST: "gitlab.antimatter-studios.com"
+  GITLAB_PORT: "443"
+  GITLAB_SSH_HOST: "ssh.gitlab.antimatter-studios.com"
+  GITLAB_SSH_PORT: "22"
+  GITLAB_HTTPS: "true"
+  GITLAB_NOTIFY_ON_BROKEN_BUILDS: "true"
+  GITLAB_NOTIFY_PUSHER: "false"
+  GITLAB_PIPELINE_SCHEDULE_WORKER_CRON: "*/5 * * * *"
+  # GitLab Backup
+  GITLAB_BACKUP_SCHEDULE: "daily"
+  GITLAB_BACKUP_TIME: "04:30"
+  # GitLab DB
+  DB_ADAPTER: "postgresql"
+  DB_HOST: "localhost"
+  DB_PORT: "5432"
+  # GitLab Redis
+  REDIS_HOST: "localhost"
+  REDIS_PORT: "6379"
+  # Nginx settings
+  NGINX_MAX_UPLOAD_SIZE: "100m"
+  # GitLab SMTP settings
+  GITLAB_EMAIL: "gitlab@antimatter-studios.com"
+  GITLAB_EMAIL_DISPLAY_NAME: "GitLab Administrator"
+  GITLAB_EMAIL_REPLY_TO: "gitlab@antimatter-studios.com"
+  SMTP_ENABLED: "true"
+  SMTP_DOMAIN: "antimatter-studios.com"
+  SMTP_HOST: "smtp.antimatter-studios.com"
+  SMTP_PORT: "587"
+  SMTP_USER: "gitlab"
+  SMTP_STARTTLS: "true"
+  SMTP_AUTHENTICATION: "login"
+  # Your other config vars below
+---
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  labels:
+    app: gitlab
+  name: postgres-cm
+  namespace: gitlab
+data:
+  DB_USER: "gitlab"
+  DB_NAME: "gitlab"

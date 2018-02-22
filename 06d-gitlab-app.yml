@@ -1,0 +1,146 @@
+apiVersion: apps/v1beta1
+kind: StatefulSet
+metadata:
+  name: gitlab
+  namespace: gitlab
+  labels:
+    app: gitlab
+spec:
+  serviceName: gitlab
+  replicas: 1
+  volumeClaimTemplates:
+    - metadata:
+        name: gitlab-data
+        namespace: gitlab
+      spec:
+        accessModes: [ "ReadWriteOnce" ]
+        storageClassName: manual
+        resources:
+          requests:
+            storage: 50Gi
+    - metadata:
+        name: gitlab-postgres
+        namespace: gitlab
+      spec:
+        accessModes: [ "ReadWriteOnce" ]
+        storageClassName: manual
+        resources:
+          requests:
+            storage: 5Gi
+  template:
+    metadata:
+      labels:
+        app: gitlab
+    spec:
+      containers:
+        - name: gitlab
+          image: sameersbn/gitlab:10.1.1
+          imagePullPolicy: Always
+          envFrom:
+            - configMapRef:
+                name: gitlab-cm
+            - configMapRef:
+                name: postgres-cm
+            - secretRef:
+                name: gitlab-secret
+            - secretRef:
+                name: postgres-secret
+          ports:
+            - containerPort: 22
+              name: ssh
+              protocol: TCP
+            - containerPort: 80
+              name: http
+              protocol: TCP
+          resources:
+            limits:
+              cpu: "2"
+              memory: 4Gi
+            requests:
+              cpu: "500m"
+              memory: "1Gi"
+          volumeMounts:
+            - name: gitlab-data
+              mountPath: /home/git/data
+        - name: postgresql
+          image: sameersbn/postgresql:9.6-2
+          envFrom:
+            - configMapRef:
+                name: postgres-cm
+            - secretRef:
+                name: postgres-secret
+          env:
+            - name: DB_EXTENSION
+              value: pg_trgm
+          ports:
+            - name: postgres
+              containerPort: 5432
+          volumeMounts:
+            - name: gitlab-postgres
+              mountPath: /var/lib/postgresql
+          livenessProbe:
+            exec:
+              command: ["pg_isready","-h","localhost","-U","postgres"]
+            initialDelaySeconds: 30
+            timeoutSeconds: 5
+          readinessProbe:
+            exec:
+              command: ["pg_isready","-h","cd localhost","-U","postgres"]
+            initialDelaySeconds: 5
+            timeoutSeconds: 1
+        - name: redis
+          image: sameersbn/redis
+          ports:
+            - name: redis
+              containerPort: 6379
+          livenessProbe:
+            exec:
+              command: ["redis-cli","ping"]
+            initialDelaySeconds: 30
+            timeoutSeconds: 5
+          readinessProbe:
+            exec:
+              command: ["redis-cli","ping"]
+            initialDelaySeconds: 5
+            timeoutSeconds: 1
+---
+
+# -- Service for the Ingress to target
+apiVersion: v1
+kind: Service
+metadata:
+  name: gitlab
+  namespace: gitlab
+spec:
+  selector:
+    app: gitlab
+  ports:
+    - name: https
+      port: 443
+      targetPort: 80
+    - name: ssh
+      port: 10022
+      targetPort: 22
+
+---
+
+# -- Ingress configuration for Gitlab
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: gitlab
+  namespace: gitlab
+  annotations:
+    kubernetes.io/ingress.class: "nginx"
+    kubernetes.io/tls-acme: "true"
+spec:
+  rules:
+    - host: gitlab.antimatter-studios.com
+      http:
+        paths:
+          - backend:
+              serviceName: gitlab
+              servicePort: 443
+          - backend:
+              serviceName: gitlab
+              servicePort: 10022
