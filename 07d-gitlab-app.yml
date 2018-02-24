@@ -14,7 +14,6 @@ spec:
         namespace: gitlab
       spec:
         accessModes: [ "ReadWriteOnce" ]
-        storageClassName: manual
         resources:
           requests:
             storage: 50Gi
@@ -23,7 +22,6 @@ spec:
         namespace: gitlab
       spec:
         accessModes: [ "ReadWriteOnce" ]
-        storageClassName: manual
         resources:
           requests:
             storage: 5Gi
