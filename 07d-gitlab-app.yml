@@ -83,7 +83,7 @@ spec:
             timeoutSeconds: 5
           readinessProbe:
             exec:
-              command: ["pg_isready","-h","cd localhost","-U","postgres"]
+              command: ["pg_isready","-h","localhost","-U","postgres"]
             initialDelaySeconds: 5
             timeoutSeconds: 1
         - name: redis
