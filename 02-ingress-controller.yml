@@ -155,6 +155,9 @@ spec:
     metadata:
       labels:
         app: ingress-controller
+      annotations:
+        prometheus.io/port: '10254'
+        prometheus.io/scrape: 'true'
     spec:
       serviceAccountName: ingress
       hostNetwork: true
@@ -184,16 +187,16 @@ spec:
             timeoutSeconds: 5
 
           ports:
-            - containerPort: 80
+            - name: http
+              containerPort: 80
               hostPort: 80
-              name: http
               protocol: TCP
-            - containerPort: 443
+            - name: https
+              containerPort: 443
               hostPort: 443
-              name: https
               protocol: TCP
-            - containerPort: 10022
+            - name: ssh
+              containerPort: 10022
               hostPort: 10022
-              name: ssh
               protocol: TCP
 ---
