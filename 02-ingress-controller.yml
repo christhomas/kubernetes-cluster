@@ -13,8 +13,11 @@ metadata:
   name: ingress
 rules:
   - apiGroups: [""]
-    resources: ["configmaps","endpoints","nodes","pods","secrets"]
+    resources: ["endpoints","nodes","pods","secrets"]
     verbs: ["list","watch"]
+  - apiGroups: [""]
+    resources: ["configmaps"]
+    verbs: ["update","list","watch"]
   - apiGroups: [""]
     resources: ["nodes"]
     verbs: ["get"]
