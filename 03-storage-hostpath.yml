@@ -103,7 +103,7 @@ metadata:
   namespace: kube-system
   name: dynamic
   annotations:
-    storageclass.beta.kubernetes.io/is-default-class: "true"
+    storageclass.beta.kubernetes.io/is-default-class: "false"
   labels:
     kubernetes.io/cluster-service: "true"
     addonmanager.kubernetes.io/mode: EnsureExists
