@@ -4,12 +4,11 @@ metadata:
   name: gitlab-data
   namespace: gitlab
 spec:
-  accessModes:
-    - ReadWriteOnce
+  accessModes: [ "ReadWriteOnce" ]
   capacity:
     storage: 50Gi
   hostPath:
-    path: /mnt/kubernetes/gitlab-data
+      path: /mnt/kubernetes/gitlab-data
 ---
 
 apiVersion: v1
@@ -18,8 +17,7 @@ metadata:
   name: gitlab-postgres
   namespace: gitlab
 spec:
-  accessModes:
-    - ReadWriteOnce
+  accessModes: [ "ReadWriteOnce" ]
   capacity:
     storage: 5Gi
   hostPath:
