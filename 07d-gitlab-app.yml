@@ -32,7 +32,7 @@ spec:
     spec:
       containers:
         - name: gitlab
-          image: sameersbn/gitlab:10.1.1
+          image: sameersbn/gitlab:10.5.1
           imagePullPolicy: Always
           envFrom:
             - configMapRef:
@@ -113,8 +113,8 @@ spec:
   selector:
     app: gitlab
   ports:
-    - name: https
-      port: 443
+    - name: http
+      port: 80
       targetPort: 80
     - name: ssh
       port: 10022
@@ -130,15 +130,20 @@ metadata:
   namespace: gitlab
   annotations:
     kubernetes.io/ingress.class: "nginx"
-    kubernetes.io/tls-acme: "true"
+    certmanager.k8s.io/cluster-issuer: "letsencrypt-staging"
 spec:
+  tls:
+    - secretName: gitlab-antimatter-studios-com
+      hosts:
+        - "gitlab.antimatter-studios.com"
   rules:
     - host: gitlab.antimatter-studios.com
       http:
         paths:
           - backend:
               serviceName: gitlab
-              servicePort: 443
+              servicePort: 80
           - backend:
               serviceName: gitlab
               servicePort: 10022
+---
