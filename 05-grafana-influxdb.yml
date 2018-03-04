@@ -116,11 +116,12 @@ metadata:
   namespace: kube-system
   annotations:
     kubernetes.io/ingress.class: "nginx"
-    kubernetes.io/ingress.allow-http: "false"
-    certmanager.k8s.io/cluster-issuer: "letsencrypt-production"
+    certmanager.k8s.io/cluster-issuer: "letsencrypt-staging"
 spec:
   tls:
     - secretName: monitoring-antimatter-studios-com
+      hosts:
+        - "monitoring.antimatter-studios.com"
   rules:
     - host: monitoring.antimatter-studios.com
       http:
