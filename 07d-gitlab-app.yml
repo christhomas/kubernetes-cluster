@@ -1,3 +1,36 @@
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: gitlab-ci
+  namespace: gitlab
+---
+
+kind: Role
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  namespace: gitlab
+  name: gitlab-ci
+rules:
+  - apiGroups: [""]
+    resources: ["*"]
+    verbs: ["read"]
+---
+
+kind: RoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: gitlab-ci
+  namespace: gitlab
+subjects:
+  - kind: ServiceAccount
+    name: gitlab-ci
+    namespace: gitlab
+roleRef:
+  kind: Role
+  name: gitlab-ci
+  apiGroup: rbac.authorization.k8s.io
+---
+
 apiVersion: apps/v1beta1
 kind: StatefulSet
 metadata:
@@ -101,6 +134,79 @@ spec:
               command: ["redis-cli","ping"]
             initialDelaySeconds: 5
             timeoutSeconds: 1
+        - name: registry
+          image: registry:latest
+          ports:
+
+---
+
+apiVersion: apps/v1beta1
+kind: StatefulSet
+metadata:
+  name: gitlab-ci-runner
+  namespace: gitlab
+  labels:
+    app: gitlab-ci-runner
+spec:
+  updateStrategy:
+    type: RollingUpdate
+  replicas: 2
+  serviceName: gitlab-ci-runner
+  template:
+    metadata:
+      labels:
+        app: gitlab-ci-runner
+    spec:
+# These rules appear to tell kubernetes to schedule each pod on different nodes
+#      affinity:
+#        podAntiAffinity:
+#          requiredDuringSchedulingIgnoredDuringExecution:
+#            - topologyKey: "kubernetes.io/hostname"
+#              labelSelector:
+#                matchExpressions:
+#                  - key: app
+#                    operator: In
+#                    values:
+#                      - gitlab-ci-runner
+      volumes:
+      - name: gitlab-ci-runner-scripts
+        projected:
+          sources:
+            - configMap:
+                name: gitlab-ci-runner-scripts
+                items:
+                  - key: run.sh
+                    path: run.sh
+                    mode: 0755
+      serviceAccountName: gitlab-ci
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 999
+        supplementalGroups: [999]
+      containers:
+      - image: gitlab/gitlab-runner:v10.5.0
+        name: gitlab-ci-runner
+        command:
+          - /scripts/run.sh
+        envFrom:
+          - configMapRef:
+              name: gitlab-ci-runner-cm
+          - secretRef:
+              name: gitlab-ci-token
+        env:
+          - name: RUNNER_NAME
+            valueFrom:
+              fieldRef:
+                fieldPath: metadata.name
+        ports:
+          - containerPort: 9100
+            name: http-metrics
+            protocol: TCP
+        volumeMounts:
+          - name: gitlab-ci-runner-scripts
+            mountPath: "/scripts"
+            readOnly: true
+      restartPolicy: Always
 ---
 
 # -- Service for the Ingress to target

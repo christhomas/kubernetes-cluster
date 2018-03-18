@@ -14,6 +14,19 @@ spec:
 apiVersion: v1
 kind: PersistentVolume
 metadata:
+  name: gitlab-docker-registry
+  namespace: gitlab
+spec:
+  accessModes: [ "ReadWriteOnce" ]
+  capacity:
+    storage: 25Gi
+  hostPath:
+      path: /mnt/kubernetes/gitlab-registry
+---
+
+apiVersion: v1
+kind: PersistentVolume
+metadata:
   name: gitlab-postgres
   namespace: gitlab
 spec:

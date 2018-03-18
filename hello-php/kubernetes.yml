@@ -1,7 +1,13 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: burning-candle
+---
 apiVersion: apps/v1beta1
 kind: Deployment
 metadata:
   name: hello-php
+  namespace: burning-candle
 spec:
   replicas: 1
   template:
@@ -17,7 +23,6 @@ spec:
         volumeMounts:
         - name: php-socket
           mountPath: /sock
-
       - name: hello-php-phpfpm
         image: hello-php-phpfpm:v2
         volumeMounts:
@@ -25,8 +30,6 @@ spec:
             mountPath: /sock
           - name: data
             mountPath: /data
-
-
       volumes:
         - name: php-socket
           emptyDir: {}
@@ -39,6 +42,7 @@ apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
   name: hello-php
+  namespace: burning-candle
 spec:
   accessModes:
     - ReadWriteOnce
@@ -51,6 +55,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: hello-php
+  namespace: burning-candle
 spec:
   selector:
     app: hello-php
@@ -62,9 +67,17 @@ apiVersion: extensions/v1beta1
 kind: Ingress
 metadata:
   name: hello-php
+  namespace: burning-candle
+  annotations:
+    kubernetes.io/ingress.class: "nginx"
+    certmanager.k8s.io/cluster-issuer: "letsencrypt-staging"
 spec:
+  tls:
+    - secretName: hello-php-burning-candle-com
+      hosts:
+        - hello-php.burning-candle.com
   rules:
-    - host: hello-php.local.env
+    - host: hello-php.burning-candle.com
       http:
         paths:
           - backend:
