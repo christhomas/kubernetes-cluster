@@ -111,7 +111,7 @@ spec:
     # The ACME server URL
     server: https://acme-staging.api.letsencrypt.org/directory
     # Email address used for ACME registration
-    email: chris.thomas@antimatter-studios.com
+    email: info@antimatter-studios.com
     # Name of a secret used to store the ACME account private key
     privateKeySecretRef:
       name: letsencrypt-staging
@@ -129,7 +129,7 @@ spec:
     # The ACME server URL
     server: https://acme-v01.api.letsencrypt.org/directory
     # Email address used for ACME registration
-    email: chris.thomas@antimatter-studios.com
+    email: info@antimatter-studios.com
     # Name of a secret used to store the ACME account private key
     privateKeySecretRef:
       name: letsencrypt-production
