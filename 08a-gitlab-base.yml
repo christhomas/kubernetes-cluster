@@ -22,10 +22,18 @@ data:
   GITLAB_PORT: "80"
   GITLAB_SSH_HOST: "ssh.gitlab.antimatter-studios.com"
   GITLAB_SSH_PORT: "22"
-  GITLAB_HTTPS: "false"
+  GITLAB_HTTPS: "true"
   GITLAB_NOTIFY_ON_BROKEN_BUILDS: "true"
   GITLAB_NOTIFY_PUSHER: "false"
   GITLAB_PIPELINE_SCHEDULE_WORKER_CRON: "*/5 * * * *"
+  # Gitlab Registry
+  GITLAB_REGISTRY_ENABLED: "true"
+  GITLAB_REGISTRY_HOST: "registry.gitlab.antimatter-studios.com"
+  GITLAB_REGISTRY_PORT: "443"
+  GITLAB_REGISTRY_API_URL: "http://registry:5000/"
+  GITLAB_REGISTRY_KEY_PATH: "/certs/registry.key"
+  #SSL_REGISTRY_KEY_PATH: "/certs/registry.key"
+  #SSL_REGISTRY_CERT_PATH: "/certs/registry.crt"
   # GitLab Backup
   GITLAB_BACKUP_SCHEDULE: "daily"
   GITLAB_BACKUP_TIME: "04:30"
@@ -67,6 +75,42 @@ data:
 apiVersion: v1
 kind: ConfigMap
 metadata:
+  name: registry-cm
+  namespace: gitlab
+  labels:
+    app: gitlab
+data:
+  REGISTRY_LOG_LEVEL: "info"
+  REGISTRY_STORAGE_DELETE_ENABLED: "true"
+  REGISTRY_STORAGE_FILESYSTEM_ROOTDIRECTORY: "/registry"
+  REGISTRY_STORAGE_CACHE_BLOBDESCRIPTOR: "redis"
+  REGISTRY_REDIS_ADDR: "redis:6379"
+  REGISTRY_AUTH_TOKEN_REALM: "https://gitlab.antimatter-studios.com/jwt/auth"
+  REGISTRY_AUTH_TOKEN_SERVICE: "container_registry"
+  REGISTRY_AUTH_TOKEN_ISSUER: "gitlab-issuer"
+  REGISTRY_AUTH_TOKEN_ROOTCERTBUNDLE: "/certs/registry.crt"
+---
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: registry-cert-data
+  namespace: gitlab
+  labels:
+    app: gitlab
+data:
+  CERT_CREATE_COUNTRY: "DE"
+  CERT_CREATE_STATE: "BERLIN"
+  CERT_CREATE_CITY: "Berlin"
+  CERT_CREATE_ORGANISATION: "Antimatter Studios"
+  CERT_CREATE_ORGANISATIONAL_UNIT: "DevOps"
+  CERT_CREATE_FQDN: "registry.gitlab.antimatter-studios.com"
+  CERT_CREATE_EMAIL: "gitlab@antimatter-studios.com"
+---
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
   name: gitlab-ci-runner-cm
   namespace: gitlab
   labels:
@@ -74,7 +118,7 @@ metadata:
 data:
   REGISTER_NON_INTERACTIVE: "true"
   REGISTER_LOCKED: "false"
-  CI_SERVER_URL: "http://gitlab.antimatter-studios.com/ci"
+  CI_SERVER_URL: "https://gitlab.antimatter-studios.com/ci"
   METRICS_SERVER: "0.0.0.0:9100"
   RUNNER_REQUEST_CONCURRENCY: "4"
   RUNNER_EXECUTOR: "kubernetes"

@@ -50,6 +50,9 @@ spec:
         resources:
           requests:
             storage: 50Gi
+        selector:
+          matchLabels:
+            volume-name: gitlab-data
     - metadata:
         name: gitlab-postgres
         namespace: gitlab
@@ -58,11 +61,43 @@ spec:
         resources:
           requests:
             storage: 5Gi
+        selector:
+          matchLabels:
+            volume-name: gitlab-postgres
+    - metadata:
+        name: gitlab-docker-registry
+        namespace: gitlab
+      spec:
+        accessModes: [ "ReadWriteOnce" ]
+        resources:
+          requests:
+            storage: 25Gi
+        selector:
+          matchLabels:
+            volume-name: gitlab-docker-registry
   template:
     metadata:
       labels:
         app: gitlab
     spec:
+      initContainers:
+        - name: registry-certs
+          image: alpine:latest
+          envFrom:
+            - configMapRef:
+                name: registry-cert-data
+          command:
+            - sh
+            - "-c"
+            - |
+              apk --no-cache add openssl
+              openssl req -nodes -new -x509 \
+                      -keyout /certs/registry.key \
+                      -out /certs/registry.crt \
+                      -subj "/C=${CERT_CREATE_COUNTRY}/ST=${CERT_CREATE_STATE}/L=${CERT_CREATE_CITY}/O=${CERT_CREATE_ORGANISATION}/OU=${CERT_CREATE_ORGANISATIONAL_UNIT}/CN=${CERT_CREATE_FQDN}/emailAddress=${CERT_CREATE_EMAIL}"
+          volumeMounts:
+            - name: certs
+              mountPath: /certs
       containers:
         - name: gitlab
           image: sameersbn/gitlab:10.5.1
@@ -93,6 +128,8 @@ spec:
           volumeMounts:
             - name: gitlab-data
               mountPath: /home/git/data
+            - name: certs
+              mountPath: /certs
         - name: postgresql
           image: sameersbn/postgresql:9.6-2
           envFrom:
@@ -136,7 +173,22 @@ spec:
             timeoutSeconds: 1
         - name: registry
           image: registry:latest
+          envFrom:
+            - configMapRef:
+                name: registry-cm
+            - secretRef:
+                name: registry-secret
           ports:
+            - name: registry
+              containerPort: 5000
+          volumeMounts:
+            - name: gitlab-docker-registry
+              mountPath: /registry
+            - name: certs
+              mountPath: /certs
+      volumes:
+        - name: certs
+          emptyDir: {}
 
 ---
 
@@ -225,6 +277,9 @@ spec:
     - name: ssh
       port: 10022
       targetPort: 22
+    - name: registry
+      port: 5000
+      targetPort: 5000
 
 ---
 
@@ -236,10 +291,11 @@ metadata:
   namespace: gitlab
   annotations:
     kubernetes.io/ingress.class: "nginx"
-    certmanager.k8s.io/cluster-issuer: "letsencrypt-staging"
+    kubernetes.io/tls-acme: "true"
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
 spec:
   tls:
-    - secretName: gitlab-antimatter-studios-com
+    - secretName: tls-gitlab-antimatter-studios-com
       hosts:
         - "gitlab.antimatter-studios.com"
   rules:
@@ -249,7 +305,16 @@ spec:
           - backend:
               serviceName: gitlab
               servicePort: 80
+    - host: ssh.gitlab.antimatter-studios.com
+      http:
+        paths:
           - backend:
               serviceName: gitlab
               servicePort: 10022
+    - host: registry.gitlab.antimatter-studios.com
+      http:
+        paths:
+          - backend:
+              serviceName: gitlab
+              servicePort: 5000
 ---

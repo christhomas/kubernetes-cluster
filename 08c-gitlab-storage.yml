@@ -3,25 +3,14 @@ kind: PersistentVolume
 metadata:
   name: gitlab-data
   namespace: gitlab
+  labels:
+    volume-name: gitlab-data
 spec:
   accessModes: [ "ReadWriteOnce" ]
   capacity:
     storage: 50Gi
   hostPath:
-      path: /mnt/kubernetes/gitlab-data
----
-
-apiVersion: v1
-kind: PersistentVolume
-metadata:
-  name: gitlab-docker-registry
-  namespace: gitlab
-spec:
-  accessModes: [ "ReadWriteOnce" ]
-  capacity:
-    storage: 25Gi
-  hostPath:
-      path: /mnt/kubernetes/gitlab-registry
+    path: /mnt/kubernetes/gitlab-data
 ---
 
 apiVersion: v1
@@ -29,10 +18,27 @@ kind: PersistentVolume
 metadata:
   name: gitlab-postgres
   namespace: gitlab
+  labels:
+    volume-name: gitlab-postgres
 spec:
   accessModes: [ "ReadWriteOnce" ]
   capacity:
     storage: 5Gi
   hostPath:
     path: /mnt/kubernetes/gitlab-postgres
+---
+
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: gitlab-docker-registry
+  namespace: gitlab
+  labels:
+    volume-name: gitlab-docker-registry
+spec:
+  accessModes: [ "ReadWriteOnce" ]
+  capacity:
+    storage: 25Gi
+  hostPath:
+    path: /mnt/kubernetes/gitlab-registry
 ---
