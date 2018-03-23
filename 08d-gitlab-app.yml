@@ -298,6 +298,9 @@ spec:
     - secretName: tls-gitlab-antimatter-studios-com
       hosts:
         - "gitlab.antimatter-studios.com"
+    - secretName: tls-registry-gitlab-antimatter-studios-com
+      hosts:
+        - "registry.gitlab.antimatter-studios.com"
   rules:
     - host: gitlab.antimatter-studios.com
       http:
