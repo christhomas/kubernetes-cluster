@@ -1,7 +1,0 @@
-FROM php:7.1.7-fpm-alpine
-
-RUN addgroup -g 3000 -S app
-RUN adduser -u 3000 -S -D -G app app
-
-ADD ./docker/phpfpm.conf /usr/local/etc/php-fpm.d/zz_socket.conf
-ADD ./www /www
