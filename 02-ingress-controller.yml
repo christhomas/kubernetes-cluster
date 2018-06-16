@@ -27,8 +27,8 @@ apiVersion: v1
 metadata:
   name: tcp-services
   namespace: ingress-nginx
-#data:
-#  3306: "default/some-mysql-server:3306"
+data:
+  10022: "gitlab/gitlab:10022"
 ---
 
 apiVersion: v1
@@ -153,7 +153,7 @@ spec:
           initialDelaySeconds: 30
           timeoutSeconds: 5
         ports:
-        - containerPort: 8080
+          - containerPort: 8080
         resources:
           limits:
             cpu: 10m
@@ -209,7 +209,7 @@ spec:
             - --configmap=$(POD_NAMESPACE)/nginx-configuration
             - --tcp-services-configmap=$(POD_NAMESPACE)/tcp-services
             - --udp-services-configmap=$(POD_NAMESPACE)/udp-services
-            # - --publish-service=$(POD_NAMESPACE)/ingress-nginx
+            - --publish-service=$(POD_NAMESPACE)/ingress-nginx
             - --annotations-prefix=nginx.ingress.kubernetes.io
           env:
             - name: POD_NAME
