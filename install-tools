@@ -1,0 +1,31 @@
+#!/usr/bin/env bash
+
+install_linux ()
+{
+    echo "TODO: Should install from apt-get?"
+    exit 1
+}
+
+install_macos ()
+{
+    echo "Installing software from brew"
+
+    brew -v > /dev/null 2>&1
+    brew_installed=$?
+
+    if [[ ${brew_installed} -eq 0 ]]; then
+        brew install python2
+        pip2 install ansible kubespray jinja --upgrade
+    else
+        echo "Please install Brew from here: http://brew.sh"
+        exit ${brew_installed}
+    fi
+}
+
+if [[ "$(uname)" == "Darwin" ]]; then
+    install_macos
+else
+    install_linux
+fi
+
+kubespray -v
