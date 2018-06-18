@@ -61,39 +61,43 @@ roleRef:
   kind: Role
   name: hostpath-provisioner
 subjects:
-- kind: ServiceAccount
-  name: hostpath-provisioner
+  - kind: ServiceAccount
+    name: hostpath-provisioner
 ---
 
-# -- Create a pod in the kube-system namespace to run the host path provisioner
-# -- The hostpath provisioner is for any volumes which are dynamically created
-# -- It does not provide volumes for any static persistent volumes
-apiVersion: v1
-kind: Pod
+# -- Create a daemon set for web requests and send them to the nginx-ingress-controller
+apiVersion: extensions/v1beta1
+kind: DaemonSet
 metadata:
-  namespace: kube-system
   name: hostpath-provisioner
+  namespace: kube-system
 spec:
-  serviceAccountName: hostpath-provisioner
-  containers:
-    - name: hostpath-provisioner
-      image: mazdermind/hostpath-provisioner:latest
-      imagePullPolicy: "IfNotPresent"
-      env:
-        - name: NODE_NAME
-          valueFrom:
-            fieldRef:
-              fieldPath: spec.nodeName
-        - name: PV_DIR
-          value: /mnt/kubernetes
-
-      volumeMounts:
+  revisionHistoryLimit: 3
+  template:
+    metadata:
+      labels:
+        app: hostpath-provisioner
+    spec:
+      serviceAccountName: hostpath-provisioner
+      terminationGracePeriodSeconds: 0
+      containers:
+        - name: hostpath-provisioner
+          image: mazdermind/hostpath-provisioner:latest
+          imagePullPolicy: "IfNotPresent"
+          env:
+            - name: NODE_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: spec.nodeName
+            - name: PV_DIR
+              value: /mnt/kubernetes
+          volumeMounts:
+            - name: pv-volume
+              mountPath: /mnt/kubernetes
+      volumes:
         - name: pv-volume
-          mountPath: /mnt/kubernetes
-  volumes:
-    - name: pv-volume
-      hostPath:
-        path: /mnt/kubernetes
+          hostPath:
+            path: /mnt/kubernetes
 ---
 
 # -- Create the standard storage class for running on-node hostpath storage
