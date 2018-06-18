@@ -4,6 +4,7 @@ metadata:
   name: monitoring-influxdb
   namespace: kube-system
 spec:
+  storageClassName: dynamic
   accessModes:
     - ReadWriteOnce
   resources:
@@ -17,6 +18,7 @@ metadata:
   name: monitoring-grafana
   namespace: kube-system
 spec:
+  storageClassName: dynamic
   accessModes:
     - ReadWriteOnce
   resources:
