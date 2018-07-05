@@ -29,6 +29,8 @@ metadata:
   namespace: ingress-nginx
 data:
   10022: "gitlab/gitlab:10022"
+  465: "mail-server/postfix:465"
+  587: "mail-server/postfix:587"
 ---
 
 apiVersion: v1
