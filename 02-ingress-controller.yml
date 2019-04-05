@@ -29,12 +29,17 @@ metadata:
   namespace: ingress-nginx
 data:
   10022: "gitlab/gitlab-ssh:10022"
-  25: "mail-server/dovecot:25" # receive server<->server
-  110: "mail-server/dovecot:110" # pop3 
-  995: "mail-server/dovecot:995" # pop3-ssl
-  143: "mail-server/dovecot:143" # imap
-  993: "mail-server/dovecot:993" # imap-ssl
-  587: "mail-server/dovecot:995" # submission from user
+  # mail server ports
+  25:    "mail-server/postfix:25"  # receive server<->server
+  110:   "mail-server/dovecot:110" # pop3 
+  995:   "mail-server/dovecot:995" # pop3-ssl
+  143:   "mail-server/dovecot:143" # imap
+  993:   "mail-server/dovecot:993" # imap-ssl
+  587:   "mail-server/dovecot:587" # submission from user
+  # ejabberd ports
+  5222:  "mail-server/jabber:5222" # xmpp
+  5280:  "mail-server/jabber:5280" # admin
+  5269:  "mail-server/jabber:5269" # federation
 ---
 
 #apiVersion: v1
