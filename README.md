@@ -1,6 +1,23 @@
 # Kubernetes Cluster on Hetzner Cloud
 This is a repository of how I setup my new kubernetes cluster.
 
+# Monitoring: 
+Previously there was a couple of yaml files to deploy heapster/prometheus/grafana/influxdb. But this was out of date and heapster was even deprecated.
+
+To get a new monitoring system which works much better and has built in dashboards, I recommend this as a replacement.
+
+https://github.com/coreos/kube-prometheus.git
+
+To install it, clone it to your system
+
+git clone https://github.com/coreos/kube-prometheus.git
+
+Then apply it to your cluster
+
+kubectl apply -f manifests/
+
+This configuraton is much better than the version I had in this repository
+
 # New Cluster: Starting from scratch
 ## Install kubelet/kubeadm/kubectl onto the all the node
 ```
