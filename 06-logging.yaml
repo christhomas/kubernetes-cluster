@@ -280,6 +280,8 @@ data:
         Logstash_Format On
         Replace_Dots    On
         Retry_Limit     False
+        # This fixes a problem with a duplicate key @timestamp in the logs. See: https://github.com/fluent/fluent-bit/issues/628#issuecomment-416520473
+        Time_Key        es_time
 
   parsers.conf: |
     [PARSER]
