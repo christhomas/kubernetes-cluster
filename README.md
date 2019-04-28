@@ -8,15 +8,11 @@ To get a new monitoring system which works much better and has built in dashboar
 
 https://github.com/coreos/kube-prometheus.git
 
-To install it, clone it to your system
-
-git clone https://github.com/coreos/kube-prometheus.git
-
-Then apply it to your cluster
-
-kubectl apply -f manifests/
+To install it, clone it to your system, then run kubectl apply on the 'manifests' directory. You might want to customise it first, but I didn't since I read through and accepted all the defaults as reasonable for my circumstances
 
 This configuraton is much better than the version I had in this repository
+
+**CHANGE THE DEFAULT PASSWORD FROM ADMIN IMMEDIATELY**
 
 # New Cluster: Starting from scratch
 ## Install kubelet/kubeadm/kubectl onto the all the node
