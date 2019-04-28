@@ -31,11 +31,11 @@ data:
   10022: "gitlab/gitlab-web:10022"
   # mail server ports
   25:    "mail-server/postfix:25::PROXY"  # receive server<->server
-# 110:   "mail-server/dovecot:110" # pop3
-  995:   "mail-server/dovecot:995" # pop3-ssl
-# 143:   "mail-server/dovecot:143" # imap
-  993:   "mail-server/dovecot:993" # imap-ssl
-  587:   "mail-server/dovecot:587" # submission from user
+# 110:   "mail-server/dovecot:110::PROXY" # pop3
+  995:   "mail-server/dovecot:995::PROXY" # pop3-ssl
+# 143:   "mail-server/dovecot:143::PROXY" # imap
+  993:   "mail-server/dovecot:993::PROXY" # imap-ssl
+  587:   "mail-server/dovecot:587::PROXY" # submission from user
   # ejabberd ports
   5222:  "mail-server/jabber:5222" # xmpp
   5280:  "mail-server/jabber:5280" # admin
