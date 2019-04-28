@@ -271,6 +271,7 @@ data:
         K8S-Logging.Parser  On
         K8S-Logging.Exclude Off
 
+  # The "Time_Key" field fixes a problem with a duplicate key @timestamp in the logs. See: https://github.com/fluent/fluent-bit/issues/628#issuecomment-416520473
   output-elasticsearch.conf: |
     [OUTPUT]
         Name            es
@@ -280,7 +281,6 @@ data:
         Logstash_Format On
         Replace_Dots    On
         Retry_Limit     False
-        # This fixes a problem with a duplicate key @timestamp in the logs. See: https://github.com/fluent/fluent-bit/issues/628#issuecomment-416520473
         Time_Key        es_time
 
   parsers.conf: |
