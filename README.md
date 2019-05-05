@@ -34,17 +34,14 @@ apt-mark hold kubelet kubeadm kubectl
 ```
 apt-get update
 
-apt-get install apt-transport-https ca-certificates curl gnupg2 software-properties-common
+apt-get install -y apt-transport-https ca-certificates curl gnupg2 software-properties-common
 
-curl -fsSL https://download.docker.com/linux/debian/gpg | sudo apt-key add -
+curl -fsSL https://download.docker.com/linux/debian/gpg | apt-key add -
 add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/debian $(lsb_release -cs) stable"
 
 apt-get update
 
-apt-get install docker-ce docker-ce-cli containerd.io
-
-# This should show you 'Hello from Docker!'
-docker run hello world
+apt-get install -y docker-ce docker-ce-cli containerd.io
 
 # Change the cgroup driver to systemd
 cat > /etc/docker/daemon.json <<EOF
@@ -63,6 +60,10 @@ mkdir -p /etc/systemd/system/docker.service.d
 # Restart docker.
 systemctl daemon-reload
 systemctl restart docker
+
+# This should show you 'Hello from Docker!'
+docker run hello-world
+
 ```
 
 ## Configure Kubernetes
@@ -89,16 +90,16 @@ kubectl apply -f "https://cloud.weave.works/k8s/net?k8s-version=$kubever"
 
 ## Joining the cluster
 For each worker node, you must 'join' the cluster. This command will do everything in one step
+
+NOTE: Adjust the command if you require different ports for ssh
 ```
-MASTER=master
-WORKER=worker
-ssh root@${WORKER} $(ssh root@${MASTER} kubeadm token create --print-join-command)
+MASTER=master; WORKER=worker; ssh root@${WORKER} $(ssh root@${MASTER} kubeadm token create --print-join-command)
 ```
 
 But for those who don't like too much bash scripting, here is the separated version
 ```
-MASTER=master
-WORKER=worker
+export MASTER=master
+export WORKER=worker
 ssh root@${MASTER} kubeadm token create --print-join-command
 # copy the command and put it below
 ssh root@${WORKER} <put command here>
