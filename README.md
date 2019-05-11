@@ -1,6 +1,13 @@
 # Kubernetes Cluster on Hetzner Cloud
 This is a repository of how I setup my new kubernetes cluster.
 
+# Weave.net
+
+You might need to periodically upgrade weave. The way to do that is like this:
+```
+kubectl apply -f "https://cloud.weave.works/k8s/net?k8s-version=$(kubectl version | base64 | tr -d '\n')"
+```
+
 # Monitoring: 
 Previously there was a couple of yaml files to deploy heapster/prometheus/grafana/influxdb. But this was out of date and heapster was even deprecated.
 
