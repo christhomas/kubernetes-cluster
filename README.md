@@ -21,7 +21,8 @@ This configuraton is much better than the version I had in this repository
 
 **CHANGE THE DEFAULT PASSWORD FROM ADMIN IMMEDIATELY**
 
-# New Cluster: Starting from scratch
+# New Nodes
+
 ## Install kubelet/kubeadm/kubectl onto the all the node
 ```
 apt-get update && apt-get install -y apt-transport-https curl
@@ -70,13 +71,16 @@ systemctl restart docker
 
 # This should show you 'Hello from Docker!'
 docker run hello-world
-
 ```
 
 ## Configure Kubernetes
 ```
 kubeadm init --pod-network-cidr=10.244.0.0/16
 ```
+
+# New Cluster: Starting from scratch
+
+
 
 On your local machine, you can gain priviledges to run kubectl like this
 ```
