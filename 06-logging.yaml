@@ -56,7 +56,7 @@ spec:
         app: elasticsearch
     spec:
       nodeSelector:
-        logging-server: "true"
+        elk: "true"
       initContainers:
         - name: fix-permissions
           image: busybox
