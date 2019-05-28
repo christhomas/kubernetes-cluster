@@ -173,16 +173,24 @@ kubeadm upgrade node experimental-control-plane
 ``` 
 apt update
 apt-cache policy kubeadm | grep 1.13
+
 # Pick a patch number, set VERSION to the number you want, without the -00 on the end
 VERSION=1.13.5
+
 apt-mark unhold kubeadm && apt-get update && apt-get install -y kubeadm=${VERSION}-00 && apt-mark hold kubeadm
 apt-mark unhold kubelet && apt-get update && apt-get install -y kubelet=${VERSION}-00 && apt-mark hold kubelet
+
 # replace abc with the name of the worker node you want to upgrade
 NODE=abc
+
+# WARNING: delete-local-data will destroy any non persistent volumes such as emptyDir
+# NOTES: but it doesn't delete persistent disks mounted from NFS or HostPath
 # Run from the master node
 kubectl drain ${NODE} --ignore-daemonsets
+
 # Run from the worker node
 kubeadm upgrade node config --kubelet-version v${VERSION}
+
 # Run from the master node
 kubectl uncordon ${NODE}
 ``` 
@@ -191,18 +199,23 @@ kubectl uncordon ${NODE}
 ``` 
 apt update
 apt-cache policy kubeadm | grep 1.14
+
 # Pick a "patch number, set VERSION to the number you want, without the -00 on the end
 VERSION=1.14.1
 apt-mark unhold kubeadm && apt-get update && apt-get install -y kubeadm=${VERSION}-00 && apt-mark hold kubeadm
 apt-mark unhold kubelet && apt-get update && apt-get install -y kubelet=${VERSION}-00 && apt-mark hold kubelet
+
 # replace abc with the name of the worker node you want to upgrade
 NODE=abc
+
 # WARNING: delete-local-data will destroy any non persistent volumes such as emptyDir
 # NOTES: but it doesn't delete persistent disks mounted from NFS or HostPath
 # Run from the master node
 kubectl drain ${NODE} --ignore-daemonsets --delete-local-data
+
 # Run from the worker node
 kubeadm upgrade node config --kubelet-version v${VERSION}
+
 # Run from the master node
 kubectl uncordon ${NODE}
 ``` 
