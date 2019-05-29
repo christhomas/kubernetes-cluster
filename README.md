@@ -1,6 +1,15 @@
 # Kubernetes Cluster on Hetzner Cloud
 This is a repository of how I setup my new kubernetes cluster.
 
+# Master Schedulable
+
+If you want to make the master schedulable. Then you can use this command. Replace <name> with your node name
+```
+kubectl taint nodes <name> node-role.kubernetes.io/master-
+```
+
+WARNING: Making the master schedulable stops it from protecting itself against rogue pods which might overload the server and leave it starved of resources. When this happens. Kubernetes can get quite angry with you and then you have a storm of problems cause pods and services start fighting, getting oom-killed, and restarting. This "storm" can get quite hairy and I'm warning you that unless you're careful. You could have a "fun" weekend!
+
 # Weave.net
 
 You might need to periodically upgrade weave. The way to do that is like this:
