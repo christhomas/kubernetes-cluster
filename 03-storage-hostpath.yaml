@@ -66,13 +66,16 @@ subjects:
 ---
 
 # -- Create a daemon set for web requests and send them to the nginx-ingress-controller
-apiVersion: extensions/v1beta1
+apiVersion: apps/v1
 kind: DaemonSet
 metadata:
   name: hostpath-provisioner
   namespace: kube-system
 spec:
   revisionHistoryLimit: 3
+  selector:
+    matchLabels:
+      app: hostpath-provisioner
   template:
     metadata:
       labels:

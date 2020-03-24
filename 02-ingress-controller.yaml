@@ -135,7 +135,7 @@ subjects:
 ---
 
 # -- Create a daemon set, so the default backend (handling unhandled endpoints) runs on each node
-apiVersion: extensions/v1beta1
+apiVersion: apps/v1
 kind: DaemonSet
 metadata:
   name: default-http-backend
@@ -143,11 +143,16 @@ metadata:
   labels:
     app: default-http-backend
 spec:
+  selector:
+    matchLabels:
+      app: default-http-backend
   template:
     metadata:
       labels:
         app: default-http-backend
     spec:
+      nodeSelector:
+        ingress: "nginx"
       serviceAccountName: ingress
       terminationGracePeriodSeconds: 60
       containers:
@@ -192,13 +197,16 @@ spec:
 ---
 
 # -- Create a daemon set for web requests and send them to the nginx-ingress-controller
-apiVersion: extensions/v1beta1
+apiVersion: apps/v1
 kind: DaemonSet
 metadata:
   name: ingress-controller
   namespace: ingress-nginx
 spec:
   revisionHistoryLimit: 3
+  selector:
+    matchLabels:
+      app: ingress-controller
   template:
     metadata:
       labels:
@@ -207,6 +215,8 @@ spec:
         prometheus.io/port: '10254'
         prometheus.io/scrape: 'true'
     spec:
+      nodeSelector:
+        ingress: "nginx"
       serviceAccountName: ingress
       hostNetwork: true
       terminationGracePeriodSeconds: 0
@@ -219,7 +229,7 @@ spec:
             - --default-backend-service=$(POD_NAMESPACE)/default-http-backend
             - --configmap=$(POD_NAMESPACE)/nginx-configuration
             - --tcp-services-configmap=$(POD_NAMESPACE)/tcp-services
-            - --udp-services-configmap=$(POD_NAMESPACE)/udp-services
+#            - --udp-services-configmap=$(POD_NAMESPACE)/udp-services
             - --annotations-prefix=nginx.ingress.kubernetes.io
           env:
             - name: POD_NAME

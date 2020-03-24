@@ -8,7 +8,16 @@ If you want to make the master schedulable. Then you can use this command. Repla
 kubectl taint nodes <name> node-role.kubernetes.io/master-
 ```
 
-WARNING: Making the master schedulable stops it from protecting itself against rogue pods which might overload the server and leave it starved of resources. When this happens. Kubernetes can get quite angry with you and then you have a storm of problems cause pods and services start fighting, getting oom-killed, and restarting. This "storm" can get quite hairy and I'm warning you that unless you're careful. You could have a "fun" weekend!
+WARNING: Making the master schedulable stops it from protecting itself against rogue pods which might overload 
+the server and leave it starved of resources. When this happens. Kubernetes can get quite angry with you and 
+then you have a storm of problems cause pods and services start fighting, getting oom-killed, and restarting. 
+This "storm" can get quite hairy and I'm warning you that unless you're careful. You could have a "fun" weekend!
+
+# Ingress Nginx
+
+You must tag the nodes you want to run ingress-nginx on. This is because I felt you should choose which nodes in 
+your cluster should act as edge ingress nodes into the cluster and it doesn't have to apply to every node in your 
+cluster
 
 # Weave.net
 
@@ -18,13 +27,16 @@ kubectl apply -f "https://cloud.weave.works/k8s/net?k8s-version=$(kubectl versio
 ```
 
 # Monitoring: 
-Previously there was a couple of yaml files to deploy heapster/prometheus/grafana/influxdb. But this was out of date and heapster was even deprecated.
+Previously there was a couple of yaml files to deploy heapster/prometheus/grafana/influxdb. But this was out of 
+date and heapster was even deprecated.
 
 To get a new monitoring system which works much better and has built in dashboards, I recommend this as a replacement.
 
 https://github.com/coreos/kube-prometheus.git
 
-To install it, clone it to your system, then run kubectl apply on the 'manifests' directory. You might want to customise it first, but I didn't since I read through and accepted all the defaults as reasonable for my circumstances
+To install it, clone it to your system, then run kubectl apply on the 'manifests' directory. You might want to 
+customise it first, but I didn't since I read through and accepted all the defaults as reasonable for my 
+circumstances
 
 This configuraton is much better than the version I had in this repository
 
@@ -47,7 +59,7 @@ apt-get update && apt-get install -y kubelet kubeadm kubectl
 apt-mark hold kubelet kubeadm kubectl
 ```
 
-## Install docker onto all the node
+## Install docker onto all the nodes
 ```
 apt-get update
 
@@ -129,7 +141,8 @@ Or you can just login to the worker and paste the command there
 
 # Existing Cluster
 ## Before you start, upgrade all your server software
-> NOTE: You have to decide for yourself whether you want to do this since it might have consequences for your operating system
+> NOTE: You have to decide for yourself whether you want to do this since it might have consequences for your 
+> operating system
 ```
 apt-get update && apt-get upgrade
 ```
@@ -145,7 +158,9 @@ deb https://apt.kubernetes.io/ kubernetes-xenial main
 ```
 
 # Perform this on your master node
-> You must upgrade both master and workers in sync, master first, then all the worker nodes, repeating each step of the upgrade in sync until you've done all the upgrades. **Cutting corners might break something you can't fix :/**
+> You must upgrade both master and workers in sync, master first, then all the worker nodes, repeating each 
+> step of the upgrade in sync until you've done all the upgrades. **Cutting corners might break something 
+> you can't fix :/**
 
 ## Upgrading from 1.12 -> 1.13
 ```

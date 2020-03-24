@@ -50,13 +50,16 @@ data:
   lego.url: "https://acme-v01.api.letsencrypt.org/directory"
 ---
 
-apiVersion: extensions/v1beta1
+apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: kube-lego
   namespace: kube-system
 spec:
   replicas: 1
+  selector:
+    matchLabels:
+      app: kube-lego
   template:
     metadata:
       labels:
