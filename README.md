@@ -1,4 +1,4 @@
-# Kubernetes Cluster on Hetzner Cloud
+# Kubernetes Cluster on Bare Metal
 This is a repository of how I setup my new kubernetes cluster.
 
 # Master Schedulable
