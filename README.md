@@ -1,5 +1,19 @@
 # Kubernetes Cluster on Bare Metal
-This is a repository of how I setup my new kubernetes cluster.
+
+This is a repository of how I setup my new kubernetes cluster. I tried to accumulate as much useful knowledge into this
+repository so I didn't have to keep searching on google for the information. None of the scripts are really necessary. You
+can open them and run everything directly and it's just because it's sometimes easier to package things up rather than
+do all the dirty work yourself. Probably you should understand what the scripts are doing before relying on them.
+
+This is a single master cluster, it's working ok for me and I'm trying to integrate more things and build a little
+system of git repositories which take care of various sides of my system and how it's configured. You'll find
+other kubernetes repositories in my profile for gitlab and monitoring (grafana).
+
+I'm trying to keep it current and make things as easy to understand as possible. I'm also adding extra knowledge 
+as I find things useful to know, or produce better scripts.
+
+This system only supports debian. But probably the basic information is enough for you to maybe clone it and translate
+it for other linux distributions.
 
 # New nodes (Master or Worker)
 
