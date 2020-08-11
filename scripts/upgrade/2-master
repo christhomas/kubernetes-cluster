@@ -9,3 +9,5 @@ echo "Node requested: $requested"
 
 kubectl drain $requested --ignore-daemonsets
 kubeadm upgrade plan
+
+echo "Run the command given from the output, we can't do it automatically for you"
