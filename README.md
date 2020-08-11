@@ -75,10 +75,10 @@ then afterwards you can upgrade to `1.18`. You must upgrade the entire cluster, 
 
 <run whatever command it gives you at the end>
 
-./upgrade/4-master-weave-net
-./upgrade/5-kubelet [version]
-./upgrade/6-restart-kubelet
-./upgrade/7-uncordon [node]
+./upgrade/5-master-weave-net
+./upgrade/6-kubelet [version]
+./upgrade/7-restart-kubelet
+./upgrade/8-uncordon [node]
 ```
 
 # Upgrading Worker Nodes
@@ -97,14 +97,14 @@ Then on master node:
 
 Afterwards on worker node:
 ```
-./upgrade/3-worker
-./upgrade/5-kubelet [version]
-./upgrade/6-restart-kubelet
+./upgrade/4-worker
+./upgrade/6-kubelet [version]
+./upgrade/7-restart-kubelet
 ```
 
 Finally, on master node:
 ```
-./upgrade/7-uncordon [node]
+./upgrade/8-uncordon [node]
 ```
 
 Repeat for all your worker nodes
@@ -147,7 +147,7 @@ kubectl label nodes [node] ingress-
 
 You might need to periodically upgrade weave. The way to do that is like this:
 ```
-./upgrade/4-master-weave-net
+./upgrade/5-master-weave-net
 ```
 
 # Monitoring: 
