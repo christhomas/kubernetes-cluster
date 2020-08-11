@@ -7,5 +7,3 @@ read requested
 echo "Node requested: $requested"
 
 kubeadm upgrade node
-
-echo "Run the command given from the output, we can't do it automatically for you"
