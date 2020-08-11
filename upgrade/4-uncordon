@@ -8,3 +8,4 @@ read requested
 echo "Node requested: $requested"
 
 kubectl uncordon $requested
+systemctl restart kubelet
