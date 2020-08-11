@@ -1,9 +1,3 @@
 #!/usr/bin/env bash
 
-echo "Are you sure this is the name of the worker node, example 's1', that you wish to upgrade?"
-read requested
-
-[ -z "$requested" ] && echo "This is not a valid name, exiting..." && exit 1
-echo "Node requested: $requested"
-
 kubeadm upgrade node

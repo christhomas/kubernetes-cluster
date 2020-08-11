@@ -1,12 +1,10 @@
 #!/usr/bin/env bash
 
-echo "Name all the node to drain, example 's1'"
-echo "** You can only run this script on systems with kubectl configured (master node or your local machine) **"
-read requested
+kubectl get nodes || ( echo "This system does not have admin access" && exit 1 )
 
-[ -z "$requested" ] && echo "This is not a valid name, exiting..." && exit 1
-echo "Node requested: $requested"
+[ -z "$1" ] && echo "This is not a valid name, exiting..." && exit 1
+echo "Node requested: $1"
 
 # Don't worry, this won't actually delete the local data, your persistent volumes are safe
 # It's just not a very well named property, I've tested this, nothing actualls gets deleted
-kubectl drain $requested --ignore-daemonsets --delete-local-data
+kubectl drain $1 --ignore-daemonsets --delete-local-data

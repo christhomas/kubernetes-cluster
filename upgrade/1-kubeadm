@@ -1,15 +1,11 @@
 #!/usr/bin/env bash
 
-echo "Enter version number to upgrade to:"
-echo "** Please remember you cannot skip versions, if you are on version 1.16, you must enter 1.17 **"
-read requested
+[ -z "$1" ] && echo "This is not a valid version number, exiting..." && exit 1
+echo "Version requested: $1"
 
-[ -z "$requested" ] && echo "This is not a valid version number, exiting..." && exit 1
-echo "Version requested: $requested"
+version=$(apt-cache madison kubeadm | grep "$1" | awk '{if(NR==1)print $3}')
 
-version=$(apt-cache madison kubeadm | grep "$requested" | awk '{if(NR==1)print $3}')
-
-[ -z "$version" ] && echo "Cannot find requested version '$requested', exiting..." && exit 1
+[ -z "$version" ] && echo "Cannot find requested version '$1', exiting..." && exit 1
 
 apt-mark unhold kubeadm
 apt-get update
