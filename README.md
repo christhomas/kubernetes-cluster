@@ -37,9 +37,9 @@ To initialise a node as a master node
 
 ## Make the Master schedulable
 
-If you want to make the master schedulable. Then you can use this command. Replace <name> with your node name
+If you want to make the master schedulable. Then you can use this command. Replace [node] with your node name
 ```
-kubectl taint nodes <name> node-role.kubernetes.io/master-
+kubectl taint nodes [node] node-role.kubernetes.io/master-
 ```
 
 WARNING: Making the master schedulable stops it from protecting itself against rogue pods which might overload 
@@ -60,7 +60,7 @@ Copy and paste that command into a terminal on the worker node
 
 # Upgrading Master Nodes
 
-The basic steps for upgrading a master are as follows, replace <version> with something like `1.18` and [node] with `s1`
+The basic steps for upgrading a master are as follows, replace [version] with something like `1.18` and [node] with `s1`
 
 NOTES:
 - Kubernetes sometimes has problems upgrading and I can't really say anything concrete about what you must
@@ -69,25 +69,25 @@ do if things go wrong. Most of the problems I'm having are with etcd though
 then afterwards you can upgrade to `1.18`. You must upgrade the entire cluster, one version at a time. It's a little labourious
 - If you do try to skip versions. You're gonna have a lot of `**FUN** :D` to fix it. Don't do it.
 ```
-./upgrade/1-kubeadm <version>
+./upgrade/1-kubeadm [version]
 ./upgrade/2-drain-node [node]
 ./upgrade/3-master
 
 <run whatever command it gives you at the end>
 
 ./upgrade/4-master-weave-net
-./upgrade/5-kubelet <version>
+./upgrade/5-kubelet [version]
 ./upgrade/6-restart-kubelet
 ./upgrade/7-uncordon [node]
 ```
 
 # Upgrading Worker Nodes
 
-Same warnings as for master nodes, don't skip versions. Same instructions as master nodes, replace [node] and <version> accordingly.
+Same warnings as for master nodes, don't skip versions. Same instructions as master nodes, replace [node] and [version] accordingly.
 
 On worker node:
 ```
-./upgrade/1-kubeadm <version>
+./upgrade/1-kubeadm [version]
 ```
 
 Then on master node:
@@ -98,7 +98,7 @@ Then on master node:
 Afterwards on worker node:
 ```
 ./upgrade/3-worker
-./upgrade/5-kubelet <version>
+./upgrade/5-kubelet [version]
 ./upgrade/6-restart-kubelet
 ```
 
@@ -111,7 +111,7 @@ Repeat for all your worker nodes
 
 # Granting admin access to your local machine
 
-Replace <user> with your ssh user and <master_node> with whatever node you elected to be the master
+Replace [user] with your ssh user and [master_node] with whatever node you elected to be the master
 
 NOTES:
 - the `.kube` directory might already exist, if this is the case, ignore the error from trying to create the directory
@@ -119,7 +119,7 @@ NOTES:
 one from your master node like this, so be careful
 ```
 mkdir $HOME/.kube
-ssh <user>@<master_node> cat /root/.kube/config > $HOME/.kube/config
+ssh [user]@[master_node] cat /root/.kube/config > $HOME/.kube/config
 ```
 
 # Ingress Nginx
