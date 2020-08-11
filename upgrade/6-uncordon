@@ -1,10 +1,10 @@
 #!/usr/bin/env bash
 
 echo "Are you sure this is the name of the master node, example 's1', that you wish to upgrade?"
+echo "** You can only run this script on systems with kubectl configured (master node or your local machine) **"
 read requested
 
 [ -z "$requested" ] && echo "This is not a valid name, exiting..." && exit 1
 echo "Node requested: $requested"
 
 kubectl uncordon $requested
-systemctl restart kubelet
