@@ -6,7 +6,7 @@ read requested
 
 [ -z "$requested" ] && echo "This is not a valid version number, exiting..." && exit 1
 
-version=$(apt-get madison kubelet | grep "$requested" | awk '{if(NR==1)print $3}')
+version=$(apt-cache madison kubelet | grep "$requested" | awk '{if(NR==1)print $3}')
 
 apt-mark unhold kubelet kubectl
 apt-get update
