@@ -6,13 +6,13 @@ read requested
 
 [ -z "$requested" ] && echo "This is not a valid version number, exiting..." && exit 1
 
-version=$(apt-get madison kubeadm | grep "$requested" | awk '{if(NR==1)print $3}')
+version=$(apt-cache madison kubeadm | grep "$requested" | awk '{if(NR==1)print $3}')
 
 [ -z "$version" ] && echo "Cannot find requested version '$requested', exiting..." && exit 1
 
 apt-mark unhold kubeadm
 apt-get update
-apt-get install -y kubeadm=$version
+apt-get install -y --allow-downgrades kubeadm=$version
 apt-mark hold kubeadm
 
 kubeadm version
