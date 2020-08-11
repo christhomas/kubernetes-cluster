@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-kubectl get nodes || echo "This system does not have admin access" && exit 1
+kubectl get nodes &>/dev/null || ( echo "This system does not have admin access" && exit 1
 
 [ -z "$1" ] && echo "This is not a valid name, exiting..." && exit 1
 echo "Node requested: $1"
