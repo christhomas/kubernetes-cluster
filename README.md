@@ -60,7 +60,7 @@ Copy and paste that command into a terminal on the worker node
 
 # Upgrading Master Nodes
 
-The basic steps for upgrading a master are as follows, replace <version> with something like `1.18` and <node> with `s1`
+The basic steps for upgrading a master are as follows, replace <version> with something like `1.18` and [node] with `s1`
 
 NOTES:
 - Kubernetes sometimes has problems upgrading and I can't really say anything concrete about what you must
@@ -70,7 +70,7 @@ then afterwards you can upgrade to `1.18`. You must upgrade the entire cluster, 
 - If you do try to skip versions. You're gonna have a lot of `**FUN** :D` to fix it. Don't do it.
 ```
 ./upgrade/1-kubeadm <version>
-./upgrade/2-drain-node <node>
+./upgrade/2-drain-node [node]
 ./upgrade/3-master
 
 <run whatever command it gives you at the end>
@@ -78,12 +78,12 @@ then afterwards you can upgrade to `1.18`. You must upgrade the entire cluster, 
 ./upgrade/4-master-weave-net
 ./upgrade/5-kubelet <version>
 ./upgrade/6-restart-kubelet
-./upgrade/7-uncordon <node>
+./upgrade/7-uncordon [node]
 ```
 
 # Upgrading Worker Nodes
 
-Same warnings as for master nodes, don't skip versions. Same instructions as master nodes, replace <node> and <version> accordingly.
+Same warnings as for master nodes, don't skip versions. Same instructions as master nodes, replace [node] and <version> accordingly.
 
 On worker node:
 ```
@@ -92,7 +92,7 @@ On worker node:
 
 Then on master node:
 ```
-./upgrade/2-drain-node <node>
+./upgrade/2-drain-node [node]
 ```
 
 Afterwards on worker node:
@@ -104,7 +104,7 @@ Afterwards on worker node:
 
 Finally, on master node:
 ```
-./upgrade/7-uncordon <node>
+./upgrade/7-uncordon [node]
 ```
 
 Repeat for all your worker nodes
@@ -133,14 +133,14 @@ You can see what nodes have what labels by running this command
 kubectl get nodes --show-labels
 ```
 
-You can label the nodes you want to run ingress on by executing this command. Replace <node> with the actual node name
+You can label the nodes you want to run ingress on by executing this command. Replace [node] with the actual node name
 ```
-kubectl label nodes <node> ingress=nginx
+kubectl label nodes [node] ingress=nginx
 ```
 
 If you make a mistake, you can remove a label like this.
 ```
-kubectl label nodes <node> ingress-
+kubectl label nodes [node] ingress-
 ```
 
 # Upgrading Weave.net
