@@ -1,7 +1,6 @@
 #!/usr/bin/env bash
 
 echo "Are you sure this is the name of the master node, example 's1', that you wish to upgrade?"
-echo "Name requested: $1"
 read requested
 
 [ -z "$requested" ] && echo "This is not a valid name, exiting..." && exit 1
