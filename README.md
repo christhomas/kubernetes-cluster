@@ -1,7 +1,27 @@
 # Kubernetes Cluster on Bare Metal
 This is a repository of how I setup my new kubernetes cluster.
 
-# Master Schedulable
+# New nodes (Master or Worker)
+
+To install the various packages to use kubernetes on this node
+```
+./create/1-node-init
+```
+
+Optional script if you did not already have docker installed
+```
+./create/2-install-docker
+```
+
+# New Master
+To initialise a node as a master node
+```
+./create/3-init-master
+```
+
+** There is NO HA support, this is a bare metal single master cluster. **
+
+## Make the Master schedulable
 
 If you want to make the master schedulable. Then you can use this command. Replace <name> with your node name
 ```
@@ -13,17 +33,107 @@ the server and leave it starved of resources. When this happens. Kubernetes can 
 then you have a storm of problems cause pods and services start fighting, getting oom-killed, and restarting. 
 This "storm" can get quite hairy and I'm warning you that unless you're careful. You could have a "fun" weekend!
 
+
+# Join Worker to Master node
+
+On the master node, execute this command, it'll return you a statement to execute on the new worker node
+```
+kubeadm token create --print-join-command
+```
+
+Copy and paste that command into a terminal on the worker node
+
+
+# Upgrading Master Nodes
+
+The basic steps for upgrading a master are as follows, replace <version> with something like `1.18` and <node> with `s1`
+
+NOTES:
+- Kubernetes sometimes has problems upgrading and I can't really say anything concrete about what you must
+do if things go wrong. Most of the problems I'm having are with etcd though
+- You can't skip versions. If you're cluster is `1.16` then you must upgrade to `1.17` first
+then afterwards you can upgrade to `1.18`. You must upgrade the entire cluster, one version at a time. It's a little labourious
+- If you do try to skip versions. You're gonna have a lot of `**FUN** :D` to fix it. Don't do it.
+```
+./upgrade/1-kubeadm <version>
+./upgrade/2-drain-node <node>
+./upgrade/3-master
+
+<run whatever command it gives you at the end>
+
+./upgrade/4-master-weave-net
+./upgrade/5-kubelet <version>
+./upgrade/6-restart-kubelet
+./upgrade/7-uncordon <node>
+```
+
+# Upgrading Worker Nodes
+
+Same warnings as for master nodes, don't skip versions. Same instructions as master nodes, replace <node> and <version> accordingly.
+
+On worker node:
+```
+./upgrade/1-kubeadm <version>
+```
+
+Then on master node:
+```
+./upgrade/2-drain-node <node>
+```
+
+Afterwards on worker node:
+```
+./upgrade/3-worker
+./upgrade/5-kubelet <version>
+./upgrade/6-restart-kubelet
+```
+
+Finally, on master node:
+```
+./upgrade/7-uncordon <node>
+```
+
+Repeat for all your worker nodes
+
+# Granting admin access to your local machine
+
+Replace <user> with your ssh user and <master_node> with whatever node you elected to be the master
+
+NOTES:
+- the `.kube` directory might already exist, if this is the case, ignore the error from trying to create the directory
+- if the `.kube` directory does exist, you might destroy an existing configuration if you overwrite it with the 
+one from your master node like this, so be careful
+```
+mkdir $HOME/.kube
+ssh <user>@<master_node> cat /root/.kube/config > $HOME/.kube/config
+```
+
 # Ingress Nginx
 
 You must tag the nodes you want to run ingress-nginx on. This is because I felt you should choose which nodes in 
 your cluster should act as edge ingress nodes into the cluster and it doesn't have to apply to every node in your 
-cluster
+cluster.
 
-# Weave.net
+You can see what nodes have what labels by running this command
+```
+kubectl get nodes --show-labels
+```
+
+You can label the nodes you want to run ingress on by executing this command. Replace <node> with the actual node name
+```
+kubectl label nodes <node> ingress=nginx
+```
+
+If you make a mistake, you can remove a label like this.
+```
+kubectl label nodes <node> ingress-
+```
+
+# Upgrading Weave.net
 
 You might need to periodically upgrade weave. The way to do that is like this:
 ```
-kubectl apply -f "https://cloud.weave.works/k8s/net?k8s-version=$(kubectl version | base64 | tr -d '\n')"
+./upgrade/4-master-weave-net
 ```
 
 # Monitoring: 
@@ -42,204 +152,20 @@ This configuraton is much better than the version I had in this repository
 
 **CHANGE THE DEFAULT PASSWORD FROM ADMIN IMMEDIATELY**
 
-# New Nodes
+# Debugging
 
-## Install kubelet/kubeadm/kubectl onto the all the node
-```
-apt-get update && apt-get install -y apt-transport-https curl
+Upgrading kubernetes can sometimes fail and cost you hours to fix it. Unfortunately I have no silver bullets to offer you.
+But remember that kubernetes runs on the underlying container runtime, probably docker. If things go wrong, it can help to 
+remember that you can get some extra information from docker itself. Here is some information you might find useful
 
-curl -s https://packages.cloud.google.com/apt/doc/apt-key.gpg | apt-key add -
-
-cat <<EOF >/etc/apt/sources.list.d/kubernetes.list
-deb https://apt.kubernetes.io/ kubernetes-xenial main
-EOF
-
-apt-get update && apt-get install -y kubelet kubeadm kubectl
-
-apt-mark hold kubelet kubeadm kubectl
-```
-
-## Install docker onto all the nodes
-```
-apt-get update
-
-apt-get install -y apt-transport-https ca-certificates curl gnupg2 software-properties-common
-
-curl -fsSL https://download.docker.com/linux/debian/gpg | apt-key add -
-add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/debian $(lsb_release -cs) stable"
-
-apt-get update
-
-apt-get install -y docker-ce docker-ce-cli containerd.io
-
-# Change the cgroup driver to systemd
-cat > /etc/docker/daemon.json <<EOF
-{
-"exec-opts": ["native.cgroupdriver=systemd"],
-"log-driver": "json-file",
-"log-opts": {
-	"max-size": "100m"
-},
-"storage-driver": "overlay2"
-}
-EOF
-
-mkdir -p /etc/systemd/system/docker.service.d
-
-# Restart docker.
-systemctl daemon-reload
-systemctl restart docker
-
-# This should show you 'Hello from Docker!'
-docker run hello-world
-```
-
-## Configure Kubernetes
-```
-kubeadm init --pod-network-cidr=10.244.0.0/16
-```
-
-# New Cluster: Starting from scratch
-
-
-
-On your local machine, you can gain priviledges to run kubectl like this
-```
-mkdir -p $HOME/.kube
-cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
-chown $(id -u):$(id -g) $HOME/.kube/config
-```
-
-Once you have done this, you can install a kubernetes network control plane
-```
-###### TO USE FLANNEL
-kubectl apply -f https://raw.githubusercontent.com/coreos/flannel/v0.9.1/Documentation/kube-flannel.yml
-
-###### OR USE WEAVE.NET
-export kubever=$(kubectl version | base64 | tr -d '\n')
-kubectl apply -f "https://cloud.weave.works/k8s/net?k8s-version=$kubever"
-```
-
-## Joining the cluster
-For each worker node, you must 'join' the cluster. This command will do everything in one step
-
-NOTE: Adjust the command if you require different ports for ssh
-```
-MASTER=master; WORKER=worker; ssh root@${WORKER} $(ssh root@${MASTER} kubeadm token create --print-join-command)
-```
-
-But for those who don't like too much bash scripting, here is the separated version
-```
-export MASTER=master
-export WORKER=worker
-ssh root@${MASTER} kubeadm token create --print-join-command
-# copy the command and put it below
-ssh root@${WORKER} <put command here>
-```
-
-Or you can just login to the worker and paste the command there
-
-# Existing Cluster
-## Before you start, upgrade all your server software
-> NOTE: You have to decide for yourself whether you want to do this since it might have consequences for your 
-> operating system
-```
-apt-get update && apt-get upgrade
-```
-
-## Check apt-get has https and not http
-I couldn't upgrade kubeadm because the apt repository for kubernetes was using http and not https
-``` 
-cat /etc/apt/sources.list.d/kubernetes.list
-```
-Make sure the file  contains
-```
-deb https://apt.kubernetes.io/ kubernetes-xenial main
-```
-
-# Perform this on your master node
-> You must upgrade both master and workers in sync, master first, then all the worker nodes, repeating each 
-> step of the upgrade in sync until you've done all the upgrades. **Cutting corners might break something 
-> you can't fix :/**
-
-## Upgrading from 1.12 -> 1.13
-```
-apt update
-apt-cache policy kubeadm | grep 1.13
-# Pick a patch number, set VERSION to the number you want, without the -00 on the end
-VERSION=1.13.5
-apt-mark unhold kubeadm && apt-get update && apt-get install -y kubeadm=${VERSION}-00 && apt-mark hold kubeadm
-# This should show the correct version number, then plan and if ok, do the upgrade
-kubeadm version
-kubeadm upgrade plan
-kubeadm upgrade apply v${VERSION}
-```
-
-## Upgrading from 1.13 -> 1.14
-```
-apt update
-apt-cache policy kubeadm | grep 1.14
-# Pick a patch number, set VERSION to the number you want, without the -00 on the end
-VERSION=1.14.1
-apt-mark unhold kubeadm && apt-get update && apt-get install -y kubeadm=${VERSION}-00 && apt-mark hold kubeadm
-# This should show the correct version number, then plan and if ok, do the upgrade
-kubeadm version
-kubeadm upgrade plan
-kubeadm upgrade apply v${VERSION}
-apt-mark unhold kubelet && apt-get update && apt-get install -y kubelet=${VERSION}-00 kubectl=${VERSION}-00 && apt-mark hold kubelet
-systemctl restart kubelet
-kubeadm upgrade node experimental-control-plane
-```
-
-# Perform this on your worker nodes
-
-## Upgrading from 1.12 -> 1.13
-``` 
-apt update
-apt-cache policy kubeadm | grep 1.13
-
-# Pick a patch number, set VERSION to the number you want, without the -00 on the end
-VERSION=1.13.5
-
-apt-mark unhold kubeadm && apt-get update && apt-get install -y kubeadm=${VERSION}-00 && apt-mark hold kubeadm
-apt-mark unhold kubelet && apt-get update && apt-get install -y kubelet=${VERSION}-00 && apt-mark hold kubelet
-
-# replace abc with the name of the worker node you want to upgrade
-NODE=abc
-
-# WARNING: delete-local-data will destroy any non persistent volumes such as emptyDir
-# NOTES: but it doesn't delete persistent disks mounted from NFS or HostPath
-# Run from the master node
-kubectl drain ${NODE} --ignore-daemonsets
-
-# Run from the worker node
-kubeadm upgrade node config --kubelet-version v${VERSION}
-
-# Run from the master node
-kubectl uncordon ${NODE}
-``` 
-
-## Upgrading from 1.13 -> 1.14
-``` 
-apt update
-apt-cache policy kubeadm | grep 1.14
-
-# Pick a "patch number, set VERSION to the number you want, without the -00 on the end
-VERSION=1.14.1
-apt-mark unhold kubeadm && apt-get update && apt-get install -y kubeadm=${VERSION}-00 && apt-mark hold kubeadm
-apt-mark unhold kubelet && apt-get update && apt-get install -y kubelet=${VERSION}-00 && apt-mark hold kubelet
-
-# replace abc with the name of the worker node you want to upgrade
-NODE=abc
-
-# WARNING: delete-local-data will destroy any non persistent volumes such as emptyDir
-# NOTES: but it doesn't delete persistent disks mounted from NFS or HostPath
-# Run from the master node
-kubectl drain ${NODE} --ignore-daemonsets --delete-local-data
-
-# Run from the worker node
-kubeadm upgrade node config --kubelet-version v${VERSION}
-
-# Run from the master node
-kubectl uncordon ${NODE}
-``` 
+1. You can use `docker ps`, `docker logs`, to find out information about a containers state
+2. Remember that `docker ps -a` will show killed containers after a failed upgrade
+3. I had a problem with etcd being defined as version 3.4 when 3.3 was being used. 
+I edited the /etc/kubernetes/manifests/etcd.yaml and changed the docker image and then the cluster would start again
+4. Kubernetes runs as a series of docker containers. EtcD is the brain, kube-apiserver is the frontend rest api. If the brain
+dies, api server won't start.
+5. In one terminal run `journalctl -f` and in a second terminal run `service docker restart` and then `service kubelet restart` to 
+see what is happening when kubernetes tries to start up. Then use `docker logs` on the failed container to maybe find out more
+6. Cry and realise how much of a failure you are. You're trying to run kubernetes and you just aren't able to fix it when it's broken.
+Your life is a mess and you need to evaluate what direction you're taking. Is this really for you? Yes, it is. 
+You just need to be persistent. I believe in you.
