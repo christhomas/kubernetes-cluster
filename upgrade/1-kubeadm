@@ -6,7 +6,7 @@ read requested
 
 [ -z "$requested" ] && echo "This is not a valid version number, exiting..." && exit 1
 
-version=$(apt-get madison kubeadm | grep $requested | awk '{if(NR==1)print $3}')
+version=$(apt-get madison kubeadm | grep "$requested" | awk '{if(NR==1)print $3}')
 
 [ -z "$version" ] && echo "Cannot find requested version '$requested', exiting..." && exit 1
 
