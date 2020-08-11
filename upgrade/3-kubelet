@@ -5,6 +5,7 @@ echo "Version requested: $1"
 read requested
 
 [ -z "$requested" ] && echo "This is not a valid version number, exiting..." && exit 1
+echo "Version requested: $requested"
 
 version=$(apt-cache madison kubelet | grep "$requested" | awk '{if(NR==1)print $3}')
 
