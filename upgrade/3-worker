@@ -1,13 +1,12 @@
 #!/usr/bin/env bash
 
-echo "Are you sure this is the name of the master node, example 's1', that you wish to upgrade?"
-echo "Name requested: $1"
+echo "Are you sure this is the name of the worker node, example 's1', that you wish to upgrade?"
 read requested
 
 [ -z "$requested" ] && echo "This is not a valid name, exiting..." && exit 1
 echo "Node requested: $requested"
 
 kubectl drain $requested --ignore-daemonsets
-kubeadm upgrade plan
+kubeadm upgrade node
 
 echo "Run the command given from the output, we can't do it automatically for you"

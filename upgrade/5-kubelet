@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
-echo "Enter version number to upgrade to, please remember you cannot skip versions, if you are on version 1.16, you must enter 1.17"
-echo "Version requested: $1"
+echo "Enter version number to upgrade to"
+echo "** please remember you cannot skip versions, if you are on version 1.16, you must enter 1.17 **"
 read requested
 
 [ -z "$requested" ] && echo "This is not a valid version number, exiting..." && exit 1

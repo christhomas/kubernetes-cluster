@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+
+kubeadm upgrade plan
+
+echo "Run the command given from the output, we can't do it automatically for you"

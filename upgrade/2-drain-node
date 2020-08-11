@@ -1,0 +1,10 @@
+#!/usr/bin/env bash
+
+echo "Name all the node to drain, example 's1'"
+echo "** You can only run this script on systems with kubectl configured (master node or your local machine) **"
+read requested
+
+[ -z "$requested" ] && echo "This is not a valid name, exiting..." && exit 1
+echo "Node requested: $requested"
+
+kubectl drain $requested --ignore-daemonsets
