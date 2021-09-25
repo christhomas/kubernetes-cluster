@@ -1,0 +1,6 @@
+#!/usr/bin/env bash
+
+kubectl apply -f $PWD
+
+echo "Use this token to login to the kubernetes dashboard"
+kubectl -n kubernetes-dashboard describe secret $(kubectl -n kubernetes-dashboard get secret | grep admin-user | awk '{print $1}')
