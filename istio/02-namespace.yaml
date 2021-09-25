@@ -1,6 +1,0 @@
-# -- Create a nemespace for all the ingress-nginx components
-apiVersion: v1
-kind: Namespace
-metadata:
-  name: istio-system
----
