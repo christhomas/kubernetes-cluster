@@ -19,18 +19,18 @@ it for other linux distributions.
 
 To install the various packages to use kubernetes on this node
 ```
-./create/1-node-init
+./a-install/1-node-init
 ```
 
 Optional script if you did not already have docker installed
 ```
-./create/2-install-docker
+./a-install/2-install-docker
 ```
 
 # New Master
 To initialise a node as a master node
 ```
-./create/3-init-master
+./a-install/3-init-master
 ```
 
 ** There is NO HA support, this is a bare metal single master cluster. **
@@ -69,16 +69,16 @@ do if things go wrong. Most of the problems I'm having are with etcd though
 then afterwards you can upgrade to `1.18`. You must upgrade the entire cluster, one version at a time. It's a little labourious
 - If you do try to skip versions. You're gonna have a lot of `**FUN** :D` to fix it. Don't do it.
 ```
-./upgrade/1-upgrade-kubeadm [version]
-./upgrade/2-drain-node [node]
-./upgrade/3-upgrade-master
+./b-upgrade/1-upgrade-kubeadm [version]
+./b-upgrade/2-drain-node [node]
+./b-upgrade/3-upgrade-master
 
 <run whatever command it gives you at the end>
 
-./upgrade/5-upgrade-master-weave-net
-./upgrade/6-upgrade-kubelet [version]
-./upgrade/7-restart-kubelet
-./upgrade/8-uncordon-node [node]
+./b-upgrade/5-master-weave-net
+./b-upgrade/6-upgrade-kubelet [version]
+./b-upgrade/7-restart-kubelet
+./b-upgrade/8-uncordon-node [node]
 ```
 
 # Upgrading Worker Nodes
@@ -87,19 +87,19 @@ Same warnings as for master nodes, don't skip versions. Same instructions as mas
 
 On worker node:
 ```
-./upgrade/1-upgrade-kubeadm [version]
+./b-upgrade/1-upgrade-kubeadm [version]
 ```
 
 Then on master node:
 ```
-./upgrade/2-drain-node [node]
+./b-upgrade/2-drain-node [node]
 ```
 
-Afterwards on worker node:
+Afterwards on worker node, replacing [version] accordingly:
 ```
-./upgrade/4-upgrade-worker
-./upgrade/6-upgrade-kubelet [version]
-./upgrade/7-restart-kubelet
+./b-upgrade/4-upgrade-worker
+./b-upgrade/6-upgrade-kubelet [version]
+./b-upgrade/7-restart-kubelet
 ```
 
 Finally, on master node:
@@ -296,7 +296,7 @@ Technically it is possible to autoscale on bare metal. But since this repository
 
 You might need to periodically upgrade weave. The way to do that is like this:
 ```
-./upgrade/5-upgrade-master-weave-net
+./b-upgrade/5-master-weave-net
 ```
 
 # Monitoring: 
