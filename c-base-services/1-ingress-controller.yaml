@@ -1,0 +1,297 @@
+# -- Create a nemespace for all the ingress-nginx components
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ingress-nginx
+---
+
+# -- Create a specific service account for the ingress controller
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: ingress
+  namespace: ingress-nginx
+---
+
+kind: ConfigMap
+apiVersion: v1
+metadata:
+  name: nginx-configuration
+  namespace: ingress-nginx
+  labels:
+    app: ingress-nginx
+---
+
+kind: ConfigMap
+apiVersion: v1
+metadata:
+  name: tcp-services
+  namespace: ingress-nginx
+data:
+  10022: "gitea/web:10022"
+  # mail server ports
+  25:    "mail-server/postfix:25::PROXY"  # receive server<->server
+  110:   "mail-server/dovecot:110::PROXY" # pop3
+  995:   "mail-server/dovecot:995::PROXY" # pop3-ssl
+  143:   "mail-server/dovecot:143::PROXY" # imap
+  993:   "mail-server/dovecot:993::PROXY" # imap-ssl
+  587:   "mail-server/dovecot:587::PROXY" # submission from user
+  # ejabberd ports
+#  5222:  "mail-server/jabber:5222" # xmpp
+#  5280:  "mail-server/jabber:5280" # admin
+#  5269:  "mail-server/jabber:5269" # federation
+---
+
+#apiVersion: v1
+#kind: ConfigMap
+#metadata:
+#  name: udp-services
+#  namespace: ingress-nginx
+#data:
+# 53: "kube-system/kube-dns:53"
+#---
+
+# -- Create the permissions the ingress needs control over
+apiVersion: rbac.authorization.k8s.io/v1beta1
+kind: ClusterRole
+metadata:
+  name: ingress
+rules:
+  - apiGroups: [""]
+    resources: ["configmaps", "endpoints", "nodes", "pods", "secrets"]
+    verbs: ["list", "watch"]
+  - apiGroups: [""]
+    resources: ["nodes"]
+    verbs: ["get"]
+  - apiGroups: [""]
+    resources: ["services"]
+    verbs: ["get", "list", "watch"]
+  - apiGroups: ["networking.k8s.io"]
+    resources: ["ingresses"]
+    verbs: ["get", "list", "watch"]
+  - apiGroups: [""]
+    resources: ["events"]
+    verbs: ["create", "patch"]
+  - apiGroups: ["extensions"]
+    resources: ["ingresses/status"]
+    verbs: ["update"]
+---
+
+# -- Bind the permissions onto the service account
+apiVersion: rbac.authorization.k8s.io/v1beta1
+kind: ClusterRoleBinding
+metadata:
+  name: ingress
+roleRef:
+  kind: ClusterRole
+  name: ingress
+  apiGroup: rbac.authorization.k8s.io
+subjects:
+  - kind: ServiceAccount
+    name: ingress
+    namespace: ingress-nginx
+---
+
+# -- Create a role to bind onto the service account
+apiVersion: rbac.authorization.k8s.io/v1beta1
+kind: Role
+metadata:
+  name: ingress
+  namespace: ingress-nginx
+rules:
+  - apiGroups: [""]
+    resources: ["configmaps", "pods", "secrets", "namespaces"]
+    verbs: ["get"]
+  - apiGroups: [""]
+    resources: ["configmaps"]
+    # Defaults to "<election-id>-<ingress-class>"
+    # Here: "<ingress-controller-leader>-<nginx>"
+    # This has to be adapted if you change either parameter
+    # when launching the nginx-ingress-controller.
+    resourceNames: ["ingress-controller-leader-nginx"]
+    verbs: ["get", "update"]
+  - apiGroups: [""]
+    resources: ["configmaps"]
+    verbs: ["create"]
+  - apiGroups: [""]
+    resources: ["endpoints"]
+    verbs: ["get"]
+---
+
+# -- Bind the role to the ingress service account
+apiVersion: rbac.authorization.k8s.io/v1beta1
+kind: RoleBinding
+metadata:
+  name: ingress
+  namespace: ingress-nginx
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: ingress
+subjects:
+  - kind: ServiceAccount
+    name: ingress
+    namespace: ingress-nginx
+---
+
+# -- Create a daemon set, so the default backend (handling unhandled endpoints) runs on each node
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: default-http-backend
+  namespace: ingress-nginx
+  labels:
+    app: default-http-backend
+spec:
+  selector:
+    matchLabels:
+      app: default-http-backend
+  template:
+    metadata:
+      labels:
+        app: default-http-backend
+    spec:
+      nodeSelector:
+        ingress: "nginx"
+      serviceAccountName: ingress
+      terminationGracePeriodSeconds: 60
+      containers:
+      - name: default-http-backend
+        # Any image is permissible as long as:
+        # 1. It serves a 404 page at /
+        # 2. It serves 200 on a /healthz endpoint
+        image: gcr.io/google_containers/defaultbackend:1.4
+        livenessProbe:
+          httpGet:
+            path: /healthz
+            port: 8080
+            scheme: HTTP
+          initialDelaySeconds: 30
+          timeoutSeconds: 5
+        ports:
+          - containerPort: 8080
+        resources:
+          limits:
+            cpu: 10m
+            memory: 20Mi
+          requests:
+            cpu: 10m
+            memory: 20Mi
+---
+
+# -- Expose the default ingress backend as a service so it can be used by the ingress-nginx-controller
+apiVersion: v1
+kind: Service
+metadata:
+  name: default-http-backend
+  namespace: ingress-nginx
+  labels:
+    app: default-http-backend
+spec:
+  selector:
+    app: default-http-backend
+  ports:
+    - port: 80
+      targetPort: 8080
+      protocol: TCP
+---
+
+# -- Create a daemon set for web requests and send them to the nginx-ingress-controller
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: ingress-controller
+  namespace: ingress-nginx
+spec:
+  revisionHistoryLimit: 3
+  selector:
+    matchLabels:
+      app: ingress-controller
+  template:
+    metadata:
+      labels:
+        app: ingress-controller
+      annotations:
+        prometheus.io/port: '10254'
+        prometheus.io/scrape: 'true'
+    spec:
+      nodeSelector:
+        ingress: "nginx"
+      serviceAccountName: ingress
+      hostNetwork: true
+      terminationGracePeriodSeconds: 0
+      containers:
+        - name: ingress-controller
+          image: quay.io/kubernetes-ingress-controller/nginx-ingress-controller:0.33.0
+          imagePullPolicy: Always
+          args:
+            - /nginx-ingress-controller
+            - --default-backend-service=$(POD_NAMESPACE)/default-http-backend
+            - --configmap=$(POD_NAMESPACE)/nginx-configuration
+            - --tcp-services-configmap=$(POD_NAMESPACE)/tcp-services
+#            - --udp-services-configmap=$(POD_NAMESPACE)/udp-services
+            - --annotations-prefix=nginx.ingress.kubernetes.io
+          env:
+            - name: POD_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+            - name: POD_NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
+          livenessProbe:
+            failureThreshold: 3
+            httpGet:
+              path: /healthz
+              port: 10254
+              scheme: HTTP
+            initialDelaySeconds: 10
+            periodSeconds: 10
+            successThreshold: 1
+            timeoutSeconds: 1
+          readinessProbe:
+            failureThreshold: 3
+            httpGet:
+              path: /healthz
+              port: 10254
+              scheme: HTTP
+            periodSeconds: 10
+            successThreshold: 1
+            timeoutSeconds: 1
+          securityContext:
+            runAsNonRoot: false
+          ports:
+            - name: http
+              containerPort: 80
+              hostPort: 80
+              protocol: TCP
+            - name: https
+              containerPort: 443
+              hostPort: 443
+              protocol: TCP
+            - name: gitlab-ssh
+              containerPort: 10022
+              hostPort: 10022
+              protocol: TCP
+            - name: mail-25
+              containerPort: 25
+              hostPort: 25
+              protocol: TCP
+            - name: mail-465
+              containerPort: 465
+              hostPort: 465
+              protocol: TCP
+            - name: mail-587
+              containerPort: 587
+              hostPort: 587
+              protocol: TCP
+            - name: mail-143
+              containerPort: 143
+              hostPort: 143
+              protocol: TCP
+            - name: mail-993
+              containerPort: 993
+              hostPort: 993
+              protocol: TCP
+---

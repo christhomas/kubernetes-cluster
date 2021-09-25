@@ -1,0 +1,19 @@
+#!/usr/bin/env bash
+
+if [ -z "$1" ]; then
+    apt-cache madison kubeadm | awk '{print $3}' | sort -V
+    echo "No revision given, use one of the above values as the first parameter";
+    exit 1
+fi
+
+echo "Version requested: $1"
+
+version=$(apt-cache madison kubeadm | grep "$1" | awk '{if(NR==1)print $3}')
+
+[ -z "$version" ] && echo "Cannot find requested version '$1', exiting..." && exit 1
+
+apt-get update
+apt-get install -y --allow-downgrades --allow-change-held-packages kubeadm=$version
+
+kubeadm version
+

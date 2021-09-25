@@ -1,0 +1,6 @@
+#!/usr/bin/env bash
+
+kubectl get nodes &>/dev/null || ( echo "This system does not have admin access" && exit 1
+
+export kubever=$(kubectl version | base64 | tr -d '\n')
+kubectl apply -f "https://cloud.weave.works/k8s/net?k8s-version=$kubever"

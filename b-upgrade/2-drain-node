@@ -1,0 +1,10 @@
+#!/usr/bin/env bash
+
+kubectl get nodes 2>/dev/null || ( echo "This system does not have admin access" && exit 1 )
+
+[ -z "$1" ] && echo "This is not a valid name, exiting..." && exit 1
+echo "Node requested: $1"
+
+# Don't worry, this won't actually delete the local data, your persistent volumes are safe
+# It's just not a very well named property, I've tested this, nothing actualls gets deleted
+kubectl drain $1 --ignore-daemonsets --delete-local-data
