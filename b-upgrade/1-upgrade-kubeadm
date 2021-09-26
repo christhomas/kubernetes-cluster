@@ -3,6 +3,7 @@
 if [ -z "$1" ]; then
     apt-cache madison kubeadm | awk '{print $3}' | sort -V
     echo "No revision given, use one of the above values as the first parameter";
+    command -v kubeadm && kubeadm version || echo "kubeadm is not installed, cannot provide you installed version number"
     exit 1
 fi
 
