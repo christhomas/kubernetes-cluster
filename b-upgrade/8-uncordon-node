@@ -6,3 +6,4 @@ kubectl get nodes 2>/dev/null || ( echo "This system does not have admin access"
 echo "Node requested: $1"
 
 kubectl uncordon $1
+kubectl get nodes
