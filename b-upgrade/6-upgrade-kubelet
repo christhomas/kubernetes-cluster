@@ -1,11 +1,19 @@
 #!/usr/bin/env bash
 
-[ -z "$1" ] && echo "This is not a valid version number, exiting..." && exit 1
+if [ -z "$1" ]; then
+    apt-cache madison kubelet | awk '{print $3}' | sort -V
+    echo "No revision given, use one of the above values as the first parameter";
+    command -v kubelet && kubelet --version || echo "kubelet is not installed, or cannot provide you installed version number"
+    exit 1
+fi
+
 echo "Version requested: $1"
 
 version=$(apt-cache madison kubelet | grep "$1" | awk '{if(NR==1)print $3}')
 
-apt-mark unhold kubelet kubectl
+[ -z "$version" ] && echo "Cannot find requested version '$1', exiting..." && exit 1
+
 apt-get update
-apt-get install -y kubelet=$version kubectl=$version
-apt-mark hold kubelet kubectl
+apt-get install -y --allow-downgrades --allow-change-held-packages kubelet=$version kubectl=$version
+
+kubelet --version
