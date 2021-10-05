@@ -52,7 +52,8 @@ data:
 #---
 
 # -- Create the permissions the ingress needs control over
-apiVersion: rbac.authorization.k8s.io/v1beta1
+---
+apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
   name: ingress
@@ -72,13 +73,16 @@ rules:
   - apiGroups: [""]
     resources: ["events"]
     verbs: ["create", "patch"]
-  - apiGroups: ["extensions"]
+  - apiGroups: ["networking.k8s.io"]
     resources: ["ingresses/status"]
     verbs: ["update"]
+  - apiGroups: ["networking.k8s.io"]
+    resources: ["ingressclasses"]
+    verbs: ["get", "list", "watch"]
 ---
 
 # -- Bind the permissions onto the service account
-apiVersion: rbac.authorization.k8s.io/v1beta1
+apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
 metadata:
   name: ingress
@@ -93,15 +97,30 @@ subjects:
 ---
 
 # -- Create a role to bind onto the service account
-apiVersion: rbac.authorization.k8s.io/v1beta1
+apiVersion: rbac.authorization.k8s.io/v1
 kind: Role
 metadata:
   name: ingress
   namespace: ingress-nginx
 rules:
   - apiGroups: [""]
-    resources: ["configmaps", "pods", "secrets", "namespaces"]
+    resources: ["namespaces"]
     verbs: ["get"]
+  - apiGroups: [""]
+    resources: ["configmaps", "pods", "secrets", "endpoints"]
+    verbs: ["get", "list", "watch"]
+  - apiGroups: [""]
+    resources: ["services"]
+    verbs: ["get", "list", "watch"]
+  - apiGroups: ["networking.k8s.io"]
+    resources: ["ingresses"]
+    verbs: ["get", "list", "watch"]
+  - apiGroups: ["networking.k8s.io"]
+    resources: ["ingresses/status"]
+    verbs: ["update"]
+  - apiGroups: ["networking.k8s.io"]
+    resources: ["ingressclasses"]
+    verbs: ["get", "list", "watch"]
   - apiGroups: [""]
     resources: ["configmaps"]
     # Defaults to "<election-id>-<ingress-class>"
@@ -114,12 +133,12 @@ rules:
     resources: ["configmaps"]
     verbs: ["create"]
   - apiGroups: [""]
-    resources: ["endpoints"]
-    verbs: ["get"]
+    resources: ["events"]
+    verbs: ["create", "patch"]
 ---
 
 # -- Bind the role to the ingress service account
-apiVersion: rbac.authorization.k8s.io/v1beta1
+apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
 metadata:
   name: ingress
@@ -222,10 +241,13 @@ spec:
       terminationGracePeriodSeconds: 0
       containers:
         - name: ingress-controller
-          image: quay.io/kubernetes-ingress-controller/nginx-ingress-controller:0.33.0
+          image: k8s.gcr.io/ingress-nginx/controller:v1.0.2@sha256:85b53b493d6d658d8c013449223b0ffd739c76d76dc9bf9000786669ec04e049
           imagePullPolicy: Always
           args:
             - /nginx-ingress-controller
+            - --election-id=ingress-controller-leader-nginx
+            - --controller-class=nginx
+            - --watch-ingress-without-class=true
             - --default-backend-service=$(POD_NAMESPACE)/default-http-backend
             - --configmap=$(POD_NAMESPACE)/nginx-configuration
             - --tcp-services-configmap=$(POD_NAMESPACE)/tcp-services
