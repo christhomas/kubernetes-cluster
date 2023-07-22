@@ -52,7 +52,6 @@ data:
 #---
 
 # -- Create the permissions the ingress needs control over
----
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
@@ -67,18 +66,21 @@ rules:
   - apiGroups: [""]
     resources: ["services"]
     verbs: ["get", "list", "watch"]
-  - apiGroups: ["networking.k8s.io"]
-    resources: ["ingresses"]
-    verbs: ["get", "list", "watch"]
   - apiGroups: [""]
     resources: ["events"]
     verbs: ["create", "patch"]
   - apiGroups: ["networking.k8s.io"]
+    resources: ["ingresses", "ingressclasses"]
+    verbs: ["get", "list", "watch"]
+  - apiGroups: ["networking.k8s.io"]
     resources: ["ingresses/status"]
     verbs: ["update"]
-  - apiGroups: ["networking.k8s.io"]
-    resources: ["ingressclasses"]
-    verbs: ["get", "list", "watch"]
+  - apiGroups: ["discovery.k8s.io"]
+    resources: ["endpointslices"]
+    verbs: ["list", "get", "watch"]
+  - apiGroups: ["coordination.k8s.io"]
+    resources: ["leases"]
+    verbs: ["get", "create", "update"]
 ---
 
 # -- Bind the permissions onto the service account
@@ -241,13 +243,12 @@ spec:
       terminationGracePeriodSeconds: 0
       containers:
         - name: ingress-controller
-          image: k8s.gcr.io/ingress-nginx/controller:v1.0.2@sha256:85b53b493d6d658d8c013449223b0ffd739c76d76dc9bf9000786669ec04e049
+          image: registry.k8s.io/ingress-nginx/controller:v1.8.1
           imagePullPolicy: Always
           args:
             - /nginx-ingress-controller
-            - --election-id=ingress-controller-leader-nginx
-            - --controller-class=nginx
-            - --watch-ingress-without-class=true
+            - --controller-class=k8s.io/ingress-nginx
+            - --ingress-class=ingress-nginx
             - --default-backend-service=$(POD_NAMESPACE)/default-http-backend
             - --configmap=$(POD_NAMESPACE)/nginx-configuration
             - --tcp-services-configmap=$(POD_NAMESPACE)/tcp-services
@@ -317,3 +318,10 @@ spec:
               hostPort: 993
               protocol: TCP
 ---
+
+apiVersion: networking.k8s.io/v1
+kind: IngressClass
+metadata:
+  name: ingress-nginx
+spec:
+  controller: k8s.io/ingress-nginx
